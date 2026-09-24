@@ -26,13 +26,21 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
   @override
   void initState() {
     super.initState();
+    AppLocale.instance.addListener(_onLocaleChanged);
     _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
   void dispose() {
+    AppLocale.instance.removeListener(_onLocaleChanged);
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _navigateToPoster() {

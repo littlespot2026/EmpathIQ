@@ -11,8 +11,11 @@ class LanguageSelectorButton extends StatelessWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) {
-        return Container(
-          decoration: const BoxDecoration(
+        return ListenableBuilder(
+          listenable: AppLocale.instance,
+          builder: (ctx, _) {
+            return Container(
+              decoration: const BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
@@ -110,6 +113,8 @@ class LanguageSelectorButton extends StatelessWidget {
               }),
             ],
           ),
+        );
+          },
         );
       },
     );

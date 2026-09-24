@@ -63,9 +63,9 @@ class AppLocale extends ChangeNotifier {
     if (_currentCode == code) return;
     if (!supportedLanguages.any((element) => element.code == code)) return;
     _currentCode = code;
+    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyLang, code);
-    notifyListeners();
   }
 
   String t(String key, [List<String>? args]) {

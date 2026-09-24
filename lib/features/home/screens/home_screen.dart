@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    AppLocale.instance.addListener(_onLocaleChanged);
     _loadInitialData();
     _checkClipboard();
 
@@ -50,9 +51,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    AppLocale.instance.removeListener(_onLocaleChanged);
     _inputController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -567,24 +575,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.history_rounded, size: 16, color: AppColors.warmBeige),
-                                const SizedBox(width: 6),
-                                Text(
-                                  tr('recent_history'),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.history_rounded, size: 16, color: AppColors.warmBeige),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      tr('recent_history'),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                             if (_historyList.isNotEmpty)
-                              Text(
-                                tr('history_count', [_historyList.length.toString()]),
-                                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: Text(
+                                  tr('history_count', [_historyList.length.toString()]),
+                                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                ),
                               ),
                           ],
                         ),

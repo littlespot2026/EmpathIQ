@@ -22,6 +22,24 @@ class _DilemmaChallengeScreenState extends State<DilemmaChallengeScreen> {
   DilemmaOption? _selectedOption;
   bool _hasRevealed = false;
 
+  @override
+  void initState() {
+    super.initState();
+    AppLocale.instance.addListener(_onLocaleChanged);
+  }
+
+  @override
+  void dispose() {
+    AppLocale.instance.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   List<DilemmaModel> get _dilemmas => DilemmaSeed.dilemmas;
   DilemmaModel get _currentDilemma => _dilemmas[_currentIndex];
 
