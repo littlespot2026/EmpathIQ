@@ -3,6 +3,7 @@ import '../../../core/localization/app_locale.dart';
 import '../../../core/models/app_settings.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/screens/landing_screen.dart';
 
 class SettingsSheet extends StatefulWidget {
   final VoidCallback onSaved;
@@ -22,6 +23,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
   final TextEditingController _modelController = TextEditingController();
   String _provider = 'gemini';
   bool _enableMock = true;
+  String? _userEmail;
 
   @override
   void initState() {
@@ -54,7 +56,26 @@ class _SettingsSheetState extends State<SettingsSheet> {
       _modelController.text = settings.modelName;
       _provider = settings.provider;
       _enableMock = settings.enableMockSimulation;
+      _userEmail = storage.getUserEmail();
     });
+  }
+
+  void _goToWelcome() {
+    Navigator.of(context).pop();
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const LandingScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+
+  Future<void> _signOut() async {
+    final storage = await StorageService.getInstance();
+    await storage.setUserLoggedOut();
+    _goToWelcome();
   }
 
   void _onProviderChanged(String provider) {
@@ -321,6 +342,52 @@ class _SettingsSheetState extends State<SettingsSheet> {
               ),
             ),
             const SizedBox(height: 18),
+
+            // Account / Welcome Page Navigation
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.account_circle_outlined, size: 20, color: AppColors.warmBeige),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            _userEmail != null
+                                ? tr('logged_in_as', [_userEmail!])
+                                : tr('landing_tab_guest'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _userEmail != null ? _signOut : _goToWelcome,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      _userEmail != null ? tr('sign_out') : tr('back_to_welcome'),
+                      style: const TextStyle(color: AppColors.warmBeige, fontSize: 11.5, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
 
             // Save Button
             SizedBox(

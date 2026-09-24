@@ -118,8 +118,30 @@ class StorageService {
     }
   }
 
+  static const String _keyUserLoggedIn = 'empathiq_user_logged_in';
+  static const String _keyUserEmail = 'empathiq_user_email';
+
   Future<void> saveSettings(AppSettings settings) async {
     final jsonStr = jsonEncode(settings.toMap());
     await _prefs?.setString(_keySettings, jsonStr);
+  }
+
+  // --- User Account & Auth Session ---
+  bool isUserLoggedIn() {
+    return _prefs?.getBool(_keyUserLoggedIn) ?? false;
+  }
+
+  String? getUserEmail() {
+    return _prefs?.getString(_keyUserEmail);
+  }
+
+  Future<void> setUserLoggedIn(String email) async {
+    await _prefs?.setBool(_keyUserLoggedIn, true);
+    await _prefs?.setString(_keyUserEmail, email);
+  }
+
+  Future<void> setUserLoggedOut() async {
+    await _prefs?.setBool(_keyUserLoggedIn, false);
+    await _prefs?.remove(_keyUserEmail);
   }
 }

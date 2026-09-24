@@ -13,6 +13,7 @@ import '../widgets/dilemma_card.dart';
 import '../widgets/history_card.dart';
 import '../widgets/language_selector_button.dart';
 import '../widgets/relationship_chip_group.dart';
+import '../../auth/screens/landing_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -257,6 +258,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _refreshStorageData();
   }
 
+  void _goToWelcome() {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const LandingScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textLength = _inputController.text.length;
@@ -276,50 +288,57 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Logo & Slogan
+                      // Logo & Slogan (Clickable to return to Welcome)
                       Expanded(
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(7),
-                              decoration: BoxDecoration(
-                                color: AppColors.warmBeige,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.psychology_rounded,
-                                size: 19,
-                                color: AppColors.background,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text(
-                                    'EmpathIQ',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w900,
-                                      color: AppColors.textPrimary,
-                                      letterSpacing: 0.6,
-                                    ),
+                        child: InkWell(
+                          onTap: _goToWelcome,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(7),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.warmBeige,
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  Text(
-                                    tr('app_slogan'),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AppColors.textMuted,
-                                    ),
+                                  child: const Icon(
+                                    Icons.psychology_rounded,
+                                    size: 19,
+                                    color: AppColors.background,
                                   ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        'EmpathIQ',
+                                        style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.textPrimary,
+                                          letterSpacing: 0.6,
+                                        ),
+                                      ),
+                                      Text(
+                                        tr('app_slogan'),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 6),

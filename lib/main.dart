@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'core/localization/app_locale.dart';
 import 'core/services/storage_service.dart';
 import 'core/theme/app_theme.dart';
-import 'features/home/screens/home_screen.dart';
+import 'features/auth/screens/landing_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +30,7 @@ class EmpathIQApp extends StatelessWidget {
               child: child!,
             );
           },
-          home: const HomeScreen(),
+          home: const LandingScreen(),
         );
       },
     );
