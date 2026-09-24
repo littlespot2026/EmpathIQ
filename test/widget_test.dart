@@ -14,7 +14,7 @@ void main() {
     await AppLocale.instance.setLanguage('en');
     await tester.pumpWidget(const EmpathIQApp());
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 2000));
 
     expect(find.text('EmpathIQ'), findsOneWidget);
     expect(find.text('AI-Powered Social EQ & Subtext Intelligence'), findsOneWidget);
@@ -90,5 +90,38 @@ void main() {
     expect(find.text('潜台词解码器'), findsNothing);
     expect(find.text('Decodificador de Subtexto'), findsOneWidget);
     expect(find.text('Decodificar Subtexto'), findsOneWidget);
+  });
+
+  testWidgets('Fluid dynamic opening animation and replay trigger function smoothly', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await AppLocale.instance.init();
+    await AppLocale.instance.setLanguage('en');
+    await tester.pumpWidget(const EmpathIQApp());
+    await tester.pump();
+
+    // Advance animation past 1800ms to settle intro overlay
+    await tester.pump(const Duration(milliseconds: 2000));
+
+    final replayBtn = find.text('🌊 Replay Fluid Reveal Animation');
+    expect(replayBtn, findsOneWidget);
+
+    // Scroll until visible and tap replay
+    await tester.ensureVisible(replayBtn);
+    await tester.tap(replayBtn);
+    await tester.pump();
+
+    // Now overlay is playing again
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.text('Tap anywhere to skip'), findsOneWidget);
+
+    // Fast-forward past completion
+    await tester.pump(const Duration(milliseconds: 1500));
+    expect(find.text('Tap anywhere to skip'), findsNothing);
+
+    // Switch to Chinese and check replay label
+    await AppLocale.instance.setLanguage('zh');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('🌊 重新播放流体开场动效'), findsOneWidget);
   });
 }

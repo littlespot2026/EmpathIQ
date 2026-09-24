@@ -5,9 +5,12 @@ import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../home/screens/home_screen.dart';
 import '../../home/widgets/language_selector_button.dart';
+import '../widgets/fluid_background_painter.dart';
+import '../widgets/fluid_opening_overlay.dart';
 
 class LandingScreen extends StatefulWidget {
-  const LandingScreen({super.key});
+  final bool autoStartIntro;
+  const LandingScreen({super.key, this.autoStartIntro = true});
 
   @override
   State<LandingScreen> createState() => _LandingScreenState();
@@ -15,8 +18,12 @@ class LandingScreen extends StatefulWidget {
 
 class _LandingScreenState extends State<LandingScreen>
     with TickerProviderStateMixin {
-  late AnimationController _ambientController;
-  late Animation<double> _ambientAnimation;
+  late AnimationController _waveController;
+  late AnimationController _introController;
+  late Animation<double> _contentFadeAnimation;
+  late Animation<Offset> _contentSlideAnimation;
+
+  Offset? _pointerPos;
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -59,15 +66,38 @@ class _LandingScreenState extends State<LandingScreen>
     super.initState();
     AppLocale.instance.addListener(_onLocaleChanged);
 
-    _ambientController = AnimationController(
+    // Continuous GPU-rendered harmonic fluid wave dynamics
+    _waveController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat(reverse: true);
+      duration: const Duration(seconds: 8),
+    )..repeat();
 
-    _ambientAnimation = CurvedAnimation(
-      parent: _ambientController,
-      curve: Curves.easeInOut,
+    // 1.8 second opening fluid ripple & aperture curtain
+    _introController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
     );
+
+    _contentFadeAnimation = CurvedAnimation(
+      parent: _introController,
+      curve: const Interval(0.35, 1.0, curve: Curves.easeOut),
+    );
+
+    _contentSlideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _introController,
+        curve: const Interval(0.35, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    if (widget.autoStartIntro) {
+      _introController.forward();
+    } else {
+      _introController.value = 1.0;
+    }
 
     // Auto-advance quotes carousel
     _quoteTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
@@ -82,7 +112,8 @@ class _LandingScreenState extends State<LandingScreen>
   @override
   void dispose() {
     AppLocale.instance.removeListener(_onLocaleChanged);
-    _ambientController.dispose();
+    _waveController.dispose();
+    _introController.dispose();
     _quoteTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
@@ -147,53 +178,50 @@ class _LandingScreenState extends State<LandingScreen>
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _ambientAnimation,
-          builder: (context, _) {
-            final glowAlpha = 0.08 + (_ambientAnimation.value * 0.08);
-
-            return Stack(
-              children: [
-                // Ambient dynamic background glow
-                Positioned(
-                  top: -80,
-                  right: -60,
-                  width: 320,
-                  height: 320,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppColors.warmBeige.withValues(alpha: glowAlpha * 1.5),
-                          AppColors.amberSand.withValues(alpha: glowAlpha),
-                          Colors.transparent,
-                        ],
-                      ),
+      body: MouseRegion(
+        onHover: (event) {
+          setState(() {
+            _pointerPos = event.localPosition;
+          });
+        },
+        onExit: (_) {
+          setState(() {
+            _pointerPos = null;
+          });
+        },
+        child: Stack(
+          children: [
+            // Layer 1: GPU-accelerated harmonic fluid canvas
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: Listenable.merge([_waveController, _introController]),
+                builder: (context, _) {
+                  return CustomPaint(
+                    size: Size.infinite,
+                    painter: FluidBackgroundPainter(
+                      animationValue: _waveController.value,
+                      pointerPosition: _pointerPos,
+                      introProgress: _introController.value,
                     ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -100,
-                  left: -80,
-                  width: 340,
-                  height: 340,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          const Color(0xFF6366F1).withValues(alpha: glowAlpha * 0.8),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                  );
+                },
+              ),
+            ),
 
-                // Main Scrollable Content
-                Center(
+            // Layer 2: Main interactive UI with staggered fade & slide-in
+            SafeArea(
+              child: AnimatedBuilder(
+                animation: _introController,
+                builder: (context, child) {
+                  return FadeTransition(
+                    opacity: _contentFadeAnimation,
+                    child: SlideTransition(
+                      position: _contentSlideAnimation,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Center(
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 480),
                     child: Column(
@@ -255,16 +283,16 @@ class _LandingScreenState extends State<LandingScreen>
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: AppColors.surfaceElevated,
+                                    color: AppColors.surfaceElevated.withValues(alpha: 0.85),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: AppColors.warmBeige.withValues(alpha: 0.3),
+                                      color: AppColors.warmBeige.withValues(alpha: 0.35),
                                       width: 0.8,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.warmBeige.withValues(alpha: 0.1),
-                                        blurRadius: 8,
+                                        color: AppColors.warmBeige.withValues(alpha: 0.12),
+                                        blurRadius: 10,
                                         offset: const Offset(0, 2),
                                       ),
                                     ],
@@ -329,7 +357,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 AnimatedContainer(
                                   duration: const Duration(milliseconds: 350),
                                   decoration: BoxDecoration(
-                                    color: AppColors.surface,
+                                    color: AppColors.surface.withValues(alpha: 0.88),
                                     borderRadius: BorderRadius.circular(18),
                                     border: Border.all(
                                       color: (activeQuote['statusColor'] as Color).withValues(alpha: 0.4),
@@ -337,8 +365,8 @@ class _LandingScreenState extends State<LandingScreen>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: (activeQuote['statusColor'] as Color).withValues(alpha: 0.12),
-                                        blurRadius: 16,
+                                        color: (activeQuote['statusColor'] as Color).withValues(alpha: 0.14),
+                                        blurRadius: 18,
                                         offset: const Offset(0, 4),
                                       ),
                                     ],
@@ -419,7 +447,7 @@ class _LandingScreenState extends State<LandingScreen>
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                         decoration: BoxDecoration(
-                                          color: AppColors.surfaceElevated,
+                                          color: AppColors.surfaceElevated.withValues(alpha: 0.9),
                                           borderRadius: BorderRadius.circular(10),
                                           border: Border.all(
                                             color: AppColors.borderSubtle,
@@ -483,7 +511,7 @@ class _LandingScreenState extends State<LandingScreen>
                                 // Glassmorphic Action Box: Dual Tab (Guest / Login)
                                 Container(
                                   decoration: BoxDecoration(
-                                    color: AppColors.surface,
+                                    color: AppColors.surface.withValues(alpha: 0.9),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                       color: AppColors.warmBeige.withValues(alpha: 0.25),
@@ -796,6 +824,41 @@ class _LandingScreenState extends State<LandingScreen>
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 24),
+
+                                // Replay Fluid Opening Animation Button
+                                Center(
+                                  child: TextButton.icon(
+                                    onPressed: () {
+                                      _introController.forward(from: 0.0);
+                                    },
+                                    icon: const Icon(
+                                      Icons.waves_rounded,
+                                      size: 15,
+                                      color: AppColors.warmBeige,
+                                    ),
+                                    label: Text(
+                                      tr('replay_fluid_intro'),
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.warmBeige,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    style: TextButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      backgroundColor: AppColors.warmBeige.withValues(alpha: 0.1),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                        side: BorderSide(
+                                          color: AppColors.warmBeige.withValues(alpha: 0.25),
+                                          width: 0.8,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                                 const SizedBox(height: 30),
                               ],
                             ),
@@ -805,9 +868,19 @@ class _LandingScreenState extends State<LandingScreen>
                     ),
                   ),
                 ),
-              ],
-            );
-          },
+              ),
+            ),
+
+            // Layer 3: Fullscreen Fluid Dynamic Ripple & Aperture Opening Overlay
+            Positioned.fill(
+              child: FluidOpeningOverlay(
+                animation: _introController,
+                onDismiss: () {
+                  _introController.value = 1.0;
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -822,7 +895,7 @@ class _LandingScreenState extends State<LandingScreen>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AppColors.surface.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.borderSubtle, width: 0.8),
       ),

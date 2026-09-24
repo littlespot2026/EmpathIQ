@@ -124,6 +124,7 @@ class Translations {
       'back_to_welcome': 'Welcome Page',
       'sign_out': 'Sign Out',
       'logged_in_as': 'Logged in as: {0}',
+      'replay_fluid_intro': '🌊 Replay Fluid Reveal Animation',
     },
     'zh': {
       'app_name': 'EmpathIQ',
@@ -249,6 +250,7 @@ class Translations {
       'back_to_welcome': '返回欢迎首页',
       'sign_out': '退出当前账号',
       'logged_in_as': '当前登录账号：{0}',
+      'replay_fluid_intro': '🌊 重新播放流体开场动效',
     },
     'ja': {
       'app_name': 'EmpathIQ',
@@ -374,6 +376,7 @@ class Translations {
       'back_to_welcome': 'ウェルカム画面に戻る',
       'sign_out': 'ログアウト',
       'logged_in_as': 'ログイン中：{0}',
+      'replay_fluid_intro': '🌊 フルード開場アニメーションを再生',
     },
     'ko': {
       'app_name': 'EmpathIQ',
@@ -499,6 +502,7 @@ class Translations {
       'back_to_welcome': '시작 화면으로 이동',
       'sign_out': '로그아웃',
       'logged_in_as': '로그인 계정: {0}',
+      'replay_fluid_intro': '🌊 플루이드 오프닝 애니메이션 다시보기',
     },
     'es': {
       'app_name': 'EmpathIQ',
@@ -624,6 +628,7 @@ class Translations {
       'back_to_welcome': 'Página de Inicio',
       'sign_out': 'Cerrar Sesión',
       'logged_in_as': 'Sesión iniciada: {0}',
+      'replay_fluid_intro': '🌊 Reproducir Animación Fluida de Apertura',
     },
     'ar': {
       'app_name': 'EmpathIQ',
@@ -749,6 +754,7 @@ class Translations {
       'back_to_welcome': 'الصفحة الرئيسية للترحيب',
       'sign_out': 'تسجيل الخروج',
       'logged_in_as': 'تم تسجيل الدخول: {0}',
+      'replay_fluid_intro': '🌊 إعادة تشغيل حركة الانسياب الافتتاحية',
     },
   };
 }
