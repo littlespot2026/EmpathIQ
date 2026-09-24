@@ -29,27 +29,71 @@ class StorageService {
     return DateFormat('yyyy-MM-dd').format(DateTime.now());
   }
 
+  static const String _keyUserIsPro = 'empathiq_user_is_pro';
+  static const String _keyProPlan = 'empathiq_pro_plan';
+  static const String _keyEmergencyScans = 'empathiq_emergency_scans';
+
+  // --- Pro Subscription & Purchases ---
+  bool isUserPro() {
+    return _prefs?.getBool(_keyUserIsPro) ?? false;
+  }
+
+  String? getProPlan() {
+    return _prefs?.getString(_keyProPlan);
+  }
+
+  int getEmergencyScans() {
+    return _prefs?.getInt(_keyEmergencyScans) ?? 0;
+  }
+
+  Future<void> setUserPro(bool isPro, {String? plan}) async {
+    await _prefs?.setBool(_keyUserIsPro, isPro);
+    if (plan != null) {
+      await _prefs?.setString(_keyProPlan, plan);
+    } else if (!isPro) {
+      await _prefs?.remove(_keyProPlan);
+    }
+  }
+
+  Future<void> addEmergencyScans(int count) async {
+    final current = getEmergencyScans();
+    await _prefs?.setInt(_keyEmergencyScans, current + count);
+  }
+
   // --- Daily Quota Management ---
   int getRemainingDailyQuota() {
+    if (isUserPro()) {
+      return 999;
+    }
     final today = _getTodayString();
     final savedDate = _prefs?.getString(_keyDailyDate);
     if (savedDate != today) {
       // New day, reset quota
       _prefs?.setString(_keyDailyDate, today);
       _prefs?.setInt(_keyDailyUsed, 0);
-      return maxFreeDailyQuota;
+      return maxFreeDailyQuota + getEmergencyScans();
     }
     final used = _prefs?.getInt(_keyDailyUsed) ?? 0;
     final remaining = maxFreeDailyQuota - used;
-    return remaining < 0 ? 0 : remaining;
+    final freeRemaining = remaining < 0 ? 0 : remaining;
+    return freeRemaining + getEmergencyScans();
   }
 
   Future<bool> consumeDailyQuota() async {
-    final remaining = getRemainingDailyQuota();
-    if (remaining <= 0) return false;
+    if (isUserPro()) {
+      return true;
+    }
     final used = _prefs?.getInt(_keyDailyUsed) ?? 0;
-    await _prefs?.setInt(_keyDailyUsed, used + 1);
-    return true;
+    if (used < maxFreeDailyQuota) {
+      await _prefs?.setInt(_keyDailyUsed, used + 1);
+      return true;
+    }
+    final emergency = getEmergencyScans();
+    if (emergency > 0) {
+      await _prefs?.setInt(_keyEmergencyScans, emergency - 1);
+      return true;
+    }
+    return false;
   }
 
   Future<void> resetDailyQuota() async {

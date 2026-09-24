@@ -4,6 +4,7 @@ import '../../../core/models/app_settings.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/screens/landing_screen.dart';
+import '../../subscription/widgets/pro_paywall_modal.dart';
 
 class SettingsSheet extends StatefulWidget {
   final VoidCallback onSaved;
@@ -24,6 +25,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
   String _provider = 'gemini';
   bool _enableMock = true;
   String? _userEmail;
+  bool _isPro = false;
 
   @override
   void initState() {
@@ -57,6 +59,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
       _provider = settings.provider;
       _enableMock = settings.enableMockSimulation;
       _userEmail = storage.getUserEmail();
+      _isPro = storage.isUserPro();
     });
   }
 
@@ -342,6 +345,83 @@ class _SettingsSheetState extends State<SettingsSheet> {
               ),
             ),
             const SizedBox(height: 18),
+
+            // Pro Membership Card
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: _isPro ? AppColors.warmBeige.withValues(alpha: 0.12) : AppColors.surfaceElevated,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _isPro ? AppColors.warmBeige.withValues(alpha: 0.5) : AppColors.borderSubtle,
+                  width: _isPro ? 1.2 : 0.8,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          _isPro ? Icons.workspace_premium_rounded : Icons.diamond_outlined,
+                          size: 22,
+                          color: AppColors.warmBeige,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _isPro ? tr('pro_member_badge') : 'EmpathIQ Free',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _isPro ? tr('pro_unlimited') : tr('landing_guest_desc'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      ProPaywallModal.show(context, onSubscribed: () {
+                        _loadCurrentSettings();
+                        widget.onSaved();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.warmBeige,
+                      foregroundColor: AppColors.background,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: Text(
+                      _isPro ? 'Manage' : tr('upgrade_pro_btn'),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
 
             // Account / Welcome Page Navigation
             Container(

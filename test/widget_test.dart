@@ -3,6 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:empathiq/main.dart';
 import 'package:empathiq/core/localization/app_locale.dart';
+import 'package:empathiq/core/models/decode_result.dart';
+import 'package:empathiq/core/services/storage_service.dart';
+import 'package:empathiq/features/decoder/widgets/strategy_card.dart';
 import 'package:empathiq/features/home/screens/home_screen.dart';
 
 void main() {
@@ -123,5 +126,72 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('🌊 重新播放流体开场动效'), findsOneWidget);
+  });
+
+  testWidgets('Pro Paywall modal and StrategyCard frosted lock gating function correctly', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await AppLocale.instance.init();
+    await AppLocale.instance.setLanguage('en');
+
+    final testStrategyA = DecodeStrategy(
+      type: 'empathy',
+      title: 'Safe Empathy',
+      actionText: 'I understand your perspective.',
+      mechanism: 'Validates emotions safely.',
+    );
+    final testStrategyB = DecodeStrategy(
+      type: 'humor',
+      title: 'Disarming Humor',
+      actionText: 'Did we secretly agree on that?',
+      mechanism: 'Dissolves tension with light wit.',
+    );
+
+    // Render StrategyCard index 0 (Free) and index 1 (Locked)
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                StrategyCard(strategy: testStrategyA, index: 0),
+                StrategyCard(strategy: testStrategyB, index: 1),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    // Strategy A is unlocked
+    expect(find.text('I understand your perspective.'), findsOneWidget);
+
+    // Strategy B is locked with Pro badge
+    expect(find.text('🔒 Pro Tactical Play'), findsOneWidget);
+    expect(find.text('✨ Unlock (3-Day Free Trial)'), findsOneWidget);
+
+    // Tap unlock button to open ProPaywallModal
+    await tester.tap(find.text('✨ Unlock (3-Day Free Trial)'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    // Verify Paywall modal is open with pricing options
+    expect(find.text('EmpathIQ Pro'), findsOneWidget);
+    expect(find.text('Yearly Pass'), findsOneWidget);
+    expect(find.text('Weekly Access'), findsOneWidget);
+
+    final instantBtn = find.text('【Test】Instant Sandbox Checkout');
+    expect(instantBtn, findsOneWidget);
+
+    // Scroll until visible and tap
+    await tester.ensureVisible(instantBtn);
+    await tester.tap(instantBtn);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1000));
+
+    // Storage is now Pro
+    final storage = await StorageService.getInstance();
+    expect(storage.isUserPro(), isTrue);
   });
 }
