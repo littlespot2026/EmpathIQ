@@ -15,6 +15,7 @@ void main() {
     expect(find.text('EmpathIQ'), findsOneWidget);
     expect(find.text('Subtext Decoder'), findsOneWidget);
     expect(find.text('Decode Subtext'), findsOneWidget);
+    expect(find.text("Partner's Silent Code: 'Whatever, Suit Yourself'"), findsOneWidget);
   });
 
   testWidgets('EmpathIQ dynamic language switch to Chinese', (WidgetTester tester) async {
@@ -27,5 +28,6 @@ void main() {
     expect(find.text('EmpathIQ'), findsOneWidget);
     expect(find.text('潜台词解码器'), findsOneWidget);
     expect(find.text('一键透视潜台词'), findsOneWidget);
+    expect(find.text('伴侣的冷战暗号：【随你便吧】'), findsOneWidget);
   });
 }

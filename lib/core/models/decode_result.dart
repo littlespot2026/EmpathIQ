@@ -25,7 +25,7 @@ class DecodeStrategy {
   factory DecodeStrategy.fromMap(Map<String, dynamic> map) {
     return DecodeStrategy(
       type: map['type'] as String? ?? 'empathy',
-      title: map['title'] as String? ?? '稳妥共情牌',
+      title: map['title'] as String? ?? 'Strategy A',
       actionText: map['action_text'] as String? ?? map['actionText'] as String? ?? '',
       mechanism: map['mechanism'] as String? ?? '',
     );
@@ -112,9 +112,9 @@ class DecodeResult {
           ? DateTime.tryParse(map['created_at'] as String) ?? DateTime.now()
           : DateTime.now(),
       inputText: map['input_text'] as String? ?? '',
-      relationship: map['relationship'] as String? ?? '伴侣',
+      relationship: map['relationship'] as String? ?? 'Partner',
       temperature: (map['temperature'] as num?)?.toInt() ?? 50,
-      temperatureLevel: map['temperature_level'] as String? ?? '焦躁黄',
+      temperatureLevel: map['temperature_level'] as String? ?? 'Agitated Yellow',
       defensePercent: (map['defense_percent'] as num?)?.toInt() ?? 60,
       surfaceMeaning: map['surface_meaning'] as String? ?? '',
       realSubtext: map['real_subtext'] as String? ?? '',
