@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/theme/app_colors.dart';
 
 class HudStatusBar extends StatelessWidget {
@@ -22,9 +23,9 @@ class HudStatusBar extends StatelessWidget {
   }
 
   String get _statusLabel {
-    if (defensePercent <= 35) return '心防解除 · 处于沟通安全区';
-    if (defensePercent <= 70) return '心存戒备 · 试探观望中';
-    return '防御紧绷 · 易燃对抗态';
+    if (defensePercent <= 35) return tr('defense_safe');
+    if (defensePercent <= 70) return tr('defense_guarded');
+    return tr('defense_hostile');
   }
 
   @override
@@ -63,7 +64,7 @@ class HudStatusBar extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        characterName.isNotEmpty ? characterName[0] : '对',
+                        characterName.isNotEmpty ? characterName[0] : 'U',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -130,7 +131,7 @@ class HudStatusBar extends StatelessWidget {
                     const Icon(Icons.shield_rounded, size: 13, color: AppColors.warmBeige),
                     const SizedBox(width: 4),
                     Text(
-                      '心防: $defensePercent%',
+                      '${tr('defense_level')}: $defensePercent%',
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w800,
@@ -180,14 +181,15 @@ class HudStatusBar extends StatelessWidget {
                     color: AppColors.amberSand,
                   ),
                   const SizedBox(width: 6),
-                  const Text(
-                    '此刻内心活动：',
-                    style: TextStyle(
+                  Text(
+                    tr('inner_thought_label'),
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: AppColors.amberSand,
                     ),
                   ),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       '“$currentInnerThought”',

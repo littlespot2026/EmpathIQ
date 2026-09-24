@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/theme/app_colors.dart';
 
 class SettlementDialog extends StatelessWidget {
@@ -22,19 +23,25 @@ class SettlementDialog extends StatelessWidget {
   }
 
   String get _rankTitle {
-    if (_score >= 90) return 'Lv.5 共情终结者';
-    if (_score >= 80) return 'Lv.4 情绪拆弹专家';
-    if (_score >= 70) return 'Lv.3 敏锐倾听者';
-    return 'Lv.2 探索练习生';
+    if (_score >= 90) return tr('rank_lv5');
+    if (_score >= 80) return tr('rank_lv4');
+    if (_score >= 70) return tr('rank_lv3');
+    return tr('rank_lv2');
   }
 
   String get _mentorComment {
     if (_score >= 85) {
-      return '精彩的攻防转换！你精准避开了自辩与指责的本能陷阱，以极高维度的情绪容纳容器，让对方从刺猬防御自然软化。你已经具备资深心理咨询师级别的同理沟通本能。';
+      return AppLocale.instance.currentCode == 'zh'
+          ? '精彩的攻防转换！你精准避开了自辩与指责的本能陷阱，以极高维度的情绪容纳容器，让对方从刺猬防御自然软化。你已经具备资深心理咨询师级别的同理沟通本能。'
+          : 'Impressive emotional agility! You skillfully navigated away from defensive justification and blame, creating a safe emotional container that softened their guard. You possess master-level empathetic intuition.';
     } else if (_score >= 70) {
-      return '整体沟通节奏稳健。你在接住情绪的同时尝试探寻事实，但偶尔稍显急躁。下一次可尝试在表达自己的观点前，先完全确认对方的需求已被彻底听见。';
+      return AppLocale.instance.currentCode == 'zh'
+          ? '整体沟通节奏稳健。你在接住情绪的同时尝试探寻事实，但偶尔稍显急躁。下一次可尝试在表达自己的观点前，先完全确认对方的需求已被彻底听见。'
+          : 'Solid, grounded conversational pacing. You acknowledged feelings while exploring facts. Next time, try fully mirroring their emotional need before transitioning to practical steps.';
     } else {
-      return '在应对高压情绪时，人类本能容易诱发辩解或退缩。请记住：在对方防御值高于70%时，任何讲道理都会被知觉为指责。先接情绪，再谈事情。';
+      return AppLocale.instance.currentCode == 'zh'
+          ? '在应对高压情绪时，人类本能容易诱发辩解或退缩。请记住：在对方防御值高于70%时，任何讲道理都会被知觉为指责。先接情绪，再谈事情。'
+          : 'Under high emotional tension, our default instinct is to defend or withdraw. Remember: when emotional guard is above 70%, logic sounds like blame. Hold the emotion first, solve the issue second.';
     }
   }
 
@@ -43,14 +50,18 @@ class SettlementDialog extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          SizedBox(
-            width: 72,
+          Expanded(
+            flex: 4,
             child: Text(
               name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
+            flex: 5,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
@@ -95,7 +106,7 @@ class SettlementDialog extends StatelessWidget {
                 border: Border.all(color: AppColors.warmBeige.withValues(alpha: 0.4), width: 0.8),
               ),
               child: Text(
-                '1分钟实战对练 · 复盘结算',
+                tr('round_settlement_title'),
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -122,9 +133,9 @@ class SettlementDialog extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Text(
-                  '/ 100 分',
-                  style: TextStyle(
+                Text(
+                  tr('score_unit'),
+                  style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textMuted,
                     fontWeight: FontWeight.w600,
@@ -153,10 +164,10 @@ class SettlementDialog extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildDimensionBar('情绪容纳度', (_score * 0.95).round().clamp(50, 99), AppColors.empathyGreen),
-                  _buildDimensionBar('潜台词洞察', (_score * 1.02).round().clamp(50, 99), AppColors.amberSand),
-                  _buildDimensionBar('健康边界感', (_score * 0.92).round().clamp(50, 99), AppColors.boundaryAmber),
-                  _buildDimensionBar('破局行动力', (_score * 0.98).round().clamp(50, 99), AppColors.humorViolet),
+                  _buildDimensionBar(tr('dim_tolerance'), (_score * 0.95).round().clamp(50, 99), AppColors.empathyGreen),
+                  _buildDimensionBar(tr('dim_insight'), (_score * 1.02).round().clamp(50, 99), AppColors.amberSand),
+                  _buildDimensionBar(tr('dim_boundary'), (_score * 0.92).round().clamp(50, 99), AppColors.boundaryAmber),
+                  _buildDimensionBar(tr('dim_agility'), (_score * 0.98).round().clamp(50, 99), AppColors.humorViolet),
                 ],
               ),
             ),
@@ -174,12 +185,12 @@ class SettlementDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    children: const [
-                      Icon(Icons.psychology_rounded, size: 14, color: AppColors.warmBeige),
-                      SizedBox(width: 5),
+                    children: [
+                      const Icon(Icons.psychology_rounded, size: 14, color: AppColors.warmBeige),
+                      const SizedBox(width: 5),
                       Text(
-                        '导师复盘点金：',
-                        style: TextStyle(
+                        tr('mentor_tip'),
+                        style: const TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
                           color: AppColors.warmBeige,
@@ -215,7 +226,7 @@ class SettlementDialog extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('重新对练', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    child: Text(tr('retry'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -230,7 +241,7 @@ class SettlementDialog extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('返回首页', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    child: Text(tr('back_home'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/dilemma_seed.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/dilemma_model.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -41,59 +42,67 @@ class DilemmaCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.amberSand.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: AppColors.amberSand.withValues(alpha: 0.4),
-                          width: 0.8,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.amberSand.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: AppColors.amberSand.withValues(alpha: 0.4),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.extension_rounded,
+                              size: 13,
+                              color: AppColors.amberSand,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              tr('daily_dilemma'),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.amberSand,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.extension_rounded,
-                            size: 13,
-                            color: AppColors.amberSand,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '今日社交残局',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.amberSand,
-                              letterSpacing: 0.3,
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceElevated,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: AppColors.borderLight,
+                              width: 0.6,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceElevated,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: AppColors.borderLight,
-                          width: 0.6,
+                          child: Text(
+                            dilemma.category,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ),
                       ),
-                      child: Text(
-                        dilemma.category,
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
@@ -105,7 +114,7 @@ class DilemmaCard extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    '全网通关率 ${dilemma.passRatePercent}%',
+                    tr('global_pass_rate', [dilemma.passRatePercent.toString()]),
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -148,25 +157,31 @@ class DilemmaCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '测试你的同理心破局本能',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: AppColors.textMuted,
+                Expanded(
+                  child: Text(
+                    tr('test_empathy_instinct'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 Row(
-                  children: const [
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      '立即推演',
-                      style: TextStyle(
+                      tr('solve_now'),
+                      style: const TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                         color: AppColors.warmBeige,
                       ),
                     ),
-                    SizedBox(width: 2),
-                    Icon(
+                    const SizedBox(width: 2),
+                    const Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 11,
                       color: AppColors.warmBeige,

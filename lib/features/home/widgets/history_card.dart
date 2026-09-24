@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/decode_result.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -14,6 +15,12 @@ class HistoryCard extends StatelessWidget {
     required this.onTap,
     this.onDelete,
   });
+
+  String _getLocalizedTempLevel(int temp) {
+    if (temp <= 30) return tr('temp_cold');
+    if (temp <= 70) return tr('temp_agitated');
+    return tr('temp_flammable');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +101,7 @@ class HistoryCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${item.temperatureLevel} ${item.temperature}°',
+                                '${_getLocalizedTempLevel(item.temperature)} ${item.temperature}°',
                                 style: TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
@@ -139,7 +146,7 @@ class HistoryCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        '潜台词：${item.realSubtext}',
+                        '${tr('real_subtext')}: ${item.realSubtext}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(

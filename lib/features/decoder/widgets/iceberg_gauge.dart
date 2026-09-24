@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/decode_result.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -10,11 +11,18 @@ class IcebergGauge extends StatelessWidget {
     required this.result,
   });
 
+  String _getLocalizedTempLevel(int temp) {
+    if (temp <= 30) return tr('temp_cold');
+    if (temp <= 70) return tr('temp_agitated');
+    return tr('temp_flammable');
+  }
+
   @override
   Widget build(BuildContext context) {
     final temp = result.temperature;
     final tempColor = AppColors.getTemperatureColor(temp);
     final defense = result.defensePercent;
+    final levelName = _getLocalizedTempLevel(temp);
 
     return Container(
       decoration: BoxDecoration(
@@ -74,7 +82,7 @@ class IcebergGauge extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          result.temperatureLevel,
+                          levelName,
                           style: const TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
@@ -96,16 +104,16 @@ class IcebergGauge extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            '情绪温度指数',
-                            style: TextStyle(
+                          Text(
+                            tr('emotional_temp'),
+                            style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
-                            result.temperatureLevel,
+                            levelName,
                             style: TextStyle(
                               fontSize: 12,
                               color: tempColor,
@@ -129,9 +137,9 @@ class IcebergGauge extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            '心理心防 / 戒备度',
-                            style: TextStyle(
+                          Text(
+                            tr('defense_level'),
+                            style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                               fontWeight: FontWeight.w600,
@@ -167,9 +175,9 @@ class IcebergGauge extends StatelessWidget {
           // Iceberg Visual Divider (Surface vs Submerged)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.surfaceElevated,
-              border: const Border(
+              border: Border(
                 top: BorderSide(color: AppColors.borderSubtle, width: 0.8),
                 bottom: BorderSide(color: AppColors.borderSubtle, width: 0.8),
               ),
@@ -182,13 +190,15 @@ class IcebergGauge extends StatelessWidget {
                   color: AppColors.coldBlue,
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  '情绪冰山水面线 (表层伪装 vs 深层暗涌)',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                    letterSpacing: 0.3,
+                Expanded(
+                  child: Text(
+                    tr('iceberg_title'),
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
               ],
@@ -212,9 +222,9 @@ class IcebergGauge extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: AppColors.borderLight, width: 0.6),
                       ),
-                      child: const Text(
-                        '表面陈述',
-                        style: TextStyle(
+                      child: Text(
+                        tr('surface_meaning'),
+                        style: const TextStyle(
                           fontSize: 10.5,
                           color: AppColors.textMuted,
                           fontWeight: FontWeight.w600,
@@ -251,16 +261,16 @@ class IcebergGauge extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: const [
-                          Icon(
+                        children: [
+                          const Icon(
                             Icons.visibility_rounded,
                             size: 15,
                             color: AppColors.amberSand,
                           ),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
-                            '真实潜台词（真实心理动机）',
-                            style: TextStyle(
+                            tr('real_subtext'),
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                               color: AppColors.amberSand,
@@ -299,15 +309,15 @@ class IcebergGauge extends StatelessWidget {
                         text: TextSpan(
                           style: const TextStyle(fontSize: 12.5, height: 1.4),
                           children: [
-                            const TextSpan(
-                              text: '核心痛点：',
-                              style: TextStyle(
+                            TextSpan(
+                              text: tr('core_pain_point'),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFFFCA5A5),
                               ),
                             ),
                             TextSpan(
-                              text: result.corePainPoint,
+                              text: ' ${result.corePainPoint}',
                               style: const TextStyle(
                                 color: AppColors.textSecondary,
                               ),

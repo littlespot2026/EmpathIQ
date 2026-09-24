@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/decode_result.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/export_helper.dart';
@@ -63,10 +64,10 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
-                children: const [
-                  Icon(Icons.check_circle_rounded, color: AppColors.empathyGreen, size: 18),
-                  SizedBox(width: 8),
-                  Text('9:16 长图已生成并保存！'),
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: AppColors.empathyGreen, size: 18),
+                  const SizedBox(width: 8),
+                  Text(tr('poster_exported')),
                 ],
               ),
               backgroundColor: AppColors.surfaceHighlight,
@@ -79,7 +80,7 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('导出失败: $e'),
+            content: Text('Export error: $e'),
             backgroundColor: AppColors.flammableRedSubtle,
           ),
         );
@@ -93,17 +94,24 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
     }
   }
 
+  String _getLocalizedTempLevel(int temp) {
+    if (temp <= 30) return tr('temp_cold');
+    if (temp <= 70) return tr('temp_agitated');
+    return tr('temp_flammable');
+  }
+
   @override
   Widget build(BuildContext context) {
     final tempColor = AppColors.getTemperatureColor(widget.result.temperature);
+    final levelName = _getLocalizedTempLevel(widget.result.temperature);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('生成分享长图 (9:16)'),
+        title: Text(tr('poster_title')),
         actions: [
           IconButton(
-            tooltip: '保存长图',
+            tooltip: tr('save_poster_btn'),
             icon: _isExporting
                 ? const SizedBox(
                     width: 18,
@@ -132,9 +140,9 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
               ),
               child: Row(
                 children: [
-                  _buildStrategyTab('empathy', '共情破局', AppColors.empathyGreen),
-                  _buildStrategyTab('humor', '幽默破冰', AppColors.humorViolet),
-                  _buildStrategyTab('boundary', '温和界限', AppColors.boundaryAmber),
+                  _buildStrategyTab('empathy', tr('strategy_a'), AppColors.empathyGreen),
+                  _buildStrategyTab('humor', tr('strategy_b'), AppColors.humorViolet),
+                  _buildStrategyTab('boundary', tr('strategy_c'), AppColors.boundaryAmber),
                 ],
               ),
             ),
@@ -185,8 +193,8 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                                 const SizedBox(width: 8),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
-                                    Text(
+                                  children: [
+                                    const Text(
                                       'EmpathIQ',
                                       style: TextStyle(
                                         fontSize: 14,
@@ -196,8 +204,8 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '看穿言外之意 · 接住真实情绪',
-                                      style: TextStyle(
+                                      tr('app_slogan'),
+                                      style: const TextStyle(
                                         fontSize: 8.5,
                                         color: AppColors.textMuted,
                                       ),
@@ -217,9 +225,9 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                                   width: 0.8,
                                 ),
                               ),
-                              child: const Text(
-                                'Lv.4 洞悉者',
-                                style: TextStyle(
+                              child: Text(
+                                tr('poster_badge'),
+                                style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.amberSand,
@@ -247,7 +255,7 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                                   const Icon(Icons.forum_rounded, size: 12, color: AppColors.warmBeige),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '情境对话 [${widget.result.relationship}]',
+                                    '[${widget.result.relationship}]',
                                     style: const TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
@@ -285,10 +293,10 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('情绪温度', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                    Text(tr('emotional_temp'), style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
                                     const SizedBox(height: 3),
                                     Text(
-                                      '${widget.result.temperature}° ${widget.result.temperatureLevel}',
+                                      '${widget.result.temperature}° $levelName',
                                       style: TextStyle(
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w800,
@@ -311,7 +319,7 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('心防戒备值', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                    Text(tr('defense_level'), style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
                                     const SizedBox(height: 3),
                                     Text(
                                       '${widget.result.defensePercent}%',
@@ -344,9 +352,9 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                '【潜台词动机透视】',
-                                style: TextStyle(
+                              Text(
+                                '【${tr('real_subtext')}】',
+                                style: const TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.amberSand,
@@ -384,7 +392,7 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                                   const Icon(Icons.auto_awesome_rounded, size: 12, color: AppColors.warmBeige),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '破局金句 · ${_currentStrategy.title}',
+                                    _currentStrategy.title,
                                     style: const TextStyle(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.w700,
@@ -405,7 +413,7 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                '心理底层机制：${_currentStrategy.mechanism}',
+                                '${tr('why_effective')}: ${_currentStrategy.mechanism}',
                                 style: const TextStyle(
                                   fontSize: 10,
                                   height: 1.4,
@@ -424,9 +432,9 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  '长按扫码 · 免费测测你的人际潜台词',
-                                  style: TextStyle(
+                                Text(
+                                  tr('poster_scan_qr'),
+                                  style: const TextStyle(
                                     fontSize: 9.5,
                                     color: AppColors.textMuted,
                                     fontWeight: FontWeight.w500,
@@ -473,7 +481,7 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
               child: ElevatedButton.icon(
                 onPressed: _isExporting ? null : _exportPoster,
                 icon: const Icon(Icons.download_rounded),
-                label: Text(_isExporting ? '生成导出中...' : '保存 9:16 长图至相册/设备'),
+                label: Text(_isExporting ? '...' : tr('save_poster_btn')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.warmBeige,
                   foregroundColor: AppColors.background,
@@ -512,8 +520,10 @@ class _PosterGeneratorScreenState extends State<PosterGeneratorScreen> {
           child: Center(
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? color : AppColors.textSecondary,
               ),

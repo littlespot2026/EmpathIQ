@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/decode_result.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -62,9 +63,12 @@ class _StrategyCardState extends State<StrategyCard>
   }
 
   String get _tagTitle {
+    if (widget.strategy.type == 'empathy') return tr('strategy_a');
+    if (widget.strategy.type == 'humor') return tr('strategy_b');
+    if (widget.strategy.type == 'boundary') return tr('strategy_c');
     final letters = ['A', 'B', 'C'];
     final letter = widget.index < letters.length ? letters[widget.index] : '';
-    return '策略 $letter · ${widget.strategy.title}';
+    return 'Strategy $letter · ${widget.strategy.title}';
   }
 
   void _handleCopy() {
@@ -76,7 +80,7 @@ class _StrategyCardState extends State<StrategyCard>
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('已复制：${widget.strategy.title} 回复语'),
+        content: Text(tr('copied_feedback', [widget.strategy.title])),
         duration: const Duration(seconds: 2),
         backgroundColor: AppColors.surfaceHighlight,
         behavior: SnackBarBehavior.floating,
@@ -173,7 +177,7 @@ class _StrategyCardState extends State<StrategyCard>
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          _isCopied ? '已复制' : '一键复制',
+                          _isCopied ? tr('copied') : tr('one_click_copy'),
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w600,
@@ -237,7 +241,7 @@ class _StrategyCardState extends State<StrategyCard>
                           ),
                           const SizedBox(width: 5),
                           Text(
-                            '为什么有效（心理机制与底层逻辑）',
+                            tr('why_effective'),
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/app_settings.dart';
 import '../../../core/models/decode_result.dart';
 import '../../../core/services/llm_service.dart';
@@ -10,6 +11,7 @@ import '../../dilemma/screens/dilemma_challenge_screen.dart';
 import '../../settings/screens/settings_sheet.dart';
 import '../widgets/dilemma_card.dart';
 import '../widgets/history_card.dart';
+import '../widgets/language_selector_button.dart';
 import '../widgets/relationship_chip_group.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -23,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final TextEditingController _inputController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
 
-  String _selectedRelationship = '伴侣';
+  String _selectedRelationshipKey = 'rel_partner';
   int _remainingQuota = 3;
   List<DecodeResult> _historyList = [];
   bool _isLoading = false;
@@ -104,9 +106,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _hasPromptedClipboard = true;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('已自动填入剪贴板文本'),
-          duration: Duration(seconds: 1),
+        SnackBar(
+          content: Text(tr('paste')),
+          duration: const Duration(seconds: 1),
           backgroundColor: AppColors.surfaceHighlight,
         ),
       );
@@ -139,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       final result = await LLMService.instance.decodeSubtext(
         inputText: text,
-        relationship: _selectedRelationship,
+        relationship: tr(_selectedRelationshipKey),
         settings: _settings,
       );
 
@@ -166,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('透视分析出错: $e'),
+            content: Text('${tr('btn_decode')} error: $e'),
             backgroundColor: AppColors.flammableRedSubtle,
           ),
         );
@@ -184,23 +186,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           side: const BorderSide(color: AppColors.borderLight),
         ),
         title: Row(
-          children: const [
-            Icon(Icons.hourglass_empty_rounded, color: AppColors.amberSand, size: 22),
-            SizedBox(width: 8),
+          children: [
+            const Icon(Icons.hourglass_empty_rounded, color: AppColors.amberSand, size: 22),
+            const SizedBox(width: 8),
             Text(
-              '今日免费额度已用完',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              tr('quota_exceeded_title'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
             ),
           ],
         ),
-        content: const Text(
-          '每日免费透视额度为 3 次。明日凌晨将自动刷新！\n\n您也可以在设置中配置个人 API_KEY 解锁无限制极速透视，或点击重置测试额度。',
-          style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.textSecondary),
+        content: Text(
+          tr('quota_exceeded_desc'),
+          style: const TextStyle(fontSize: 13, height: 1.5, color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('我知道了', style: TextStyle(color: AppColors.textMuted)),
+            child: Text(tr('understood'), style: const TextStyle(color: AppColors.textMuted)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -211,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               backgroundColor: AppColors.warmBeige,
               foregroundColor: AppColors.background,
             ),
-            child: const Text('前往配置 / 重置', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: Text(tr('go_to_settings'), style: const TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -267,50 +269,63 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // Logo & Slogan
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: AppColors.warmBeige,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.psychology_rounded,
-                              size: 19,
-                              color: AppColors.background,
-                            ),
-                          ),
-                          const SizedBox(width: 9),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text(
-                                'EmpathIQ',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.textPrimary,
-                                  letterSpacing: 0.6,
-                                ),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                color: AppColors.warmBeige,
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              Text(
-                                '看穿言外之意 · 接住真实情绪',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.textMuted,
-                                ),
+                              child: const Icon(
+                                Icons.psychology_rounded,
+                                size: 19,
+                                color: AppColors.background,
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'EmpathIQ',
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.textPrimary,
+                                      letterSpacing: 0.6,
+                                    ),
+                                  ),
+                                  Text(
+                                    tr('app_slogan'),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 6),
 
-                      // Right Capsule: Daily Quota & Settings
+                      // Right Capsule: Language Switcher, Daily Quota & Settings
                       Row(
                         children: [
+                          // Language Switcher dropdown
+                          const LanguageSelectorButton(),
+                          const SizedBox(width: 5),
+
+                          // Quota capsule
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4.5),
                             decoration: BoxDecoration(
                               color: AppColors.surfaceElevated,
                               borderRadius: BorderRadius.circular(14),
@@ -330,11 +345,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                       ? AppColors.warmBeige
                                       : AppColors.textMuted,
                                 ),
-                                const SizedBox(width: 3),
+                                const SizedBox(width: 2),
                                 Text(
-                                  '今日剩余: $_remainingQuota/3',
+                                  tr('daily_scans_left', [_remainingQuota.toString()]),
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 10.5,
                                     fontWeight: FontWeight.w700,
                                     color: _remainingQuota > 0
                                         ? AppColors.warmBeige
@@ -344,11 +359,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 2),
                           IconButton(
-                            icon: const Icon(Icons.settings_outlined, size: 20, color: AppColors.textSecondary),
+                            icon: const Icon(Icons.settings_outlined, size: 19, color: AppColors.textSecondary),
                             onPressed: _openSettings,
-                            tooltip: '设置与 API 配置',
+                            tooltip: tr('settings_title'),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                           ),
                         ],
                       ),
@@ -382,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    '检测到剪贴板有内容，是否一键粘贴？',
+                                    tr('clipboard_detected'),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(fontSize: 11.5, color: AppColors.warmBeigeLight),
@@ -395,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                     minimumSize: Size.zero,
                                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                   ),
-                                  child: const Text('粘贴', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.warmBeige)),
+                                  child: Text(tr('paste'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: AppColors.warmBeige)),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.close_rounded, size: 14, color: AppColors.textMuted),
@@ -426,12 +443,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                children: const [
-                                  Icon(Icons.radar_rounded, size: 16, color: AppColors.amberSand),
-                                  SizedBox(width: 6),
+                                children: [
+                                  const Icon(Icons.radar_rounded, size: 16, color: AppColors.amberSand),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    '潜台词解码器',
-                                    style: TextStyle(
+                                    tr('subtext_decoder'),
+                                    style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
                                       color: AppColors.textPrimary,
@@ -451,10 +468,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 onChanged: (_) => setState(() {}),
                                 style: const TextStyle(fontSize: 14, height: 1.4, color: AppColors.textPrimary),
                                 decoration: InputDecoration(
-                                  hintText: '输入对方说的话（如：“我没事，你忙你的吧”、“随你便，你高兴就好”...）',
+                                  hintText: tr('decoder_hint'),
                                   filled: true,
                                   fillColor: AppColors.surfaceElevated,
-                                  counterText: '$textLength / 300 字',
+                                  counterText: tr('char_counter', [textLength.toString()]),
                                   counterStyle: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
@@ -465,22 +482,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               const SizedBox(height: 10),
 
                               // Relationship chips
-                              const Text(
-                                '选择人际关系维度：',
-                                style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                              Text(
+                                tr('relationship_title'),
+                                style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(height: 8),
                               RelationshipChipGroup(
-                                selectedRelationship: _selectedRelationship,
-                                onSelected: (rel) {
+                                selectedRelationship: _selectedRelationshipKey,
+                                onSelected: (relKey) {
                                   setState(() {
-                                    _selectedRelationship = rel;
+                                    _selectedRelationshipKey = relKey;
                                   });
                                 },
                               ),
                               const SizedBox(height: 16),
 
-                              // Main Action Button: 一键透视潜台词
+                              // Main Action Button: Decode Subtext
                               SizedBox(
                                 width: double.infinity,
                                 child: AnimatedContainer(
@@ -498,8 +515,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                     child: _isLoading
                                         ? Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
-                                            children: const [
-                                              SizedBox(
+                                            children: [
+                                              const SizedBox(
                                                 width: 16,
                                                 height: 16,
                                                 child: CircularProgressIndicator(
@@ -507,10 +524,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                   valueColor: AlwaysStoppedAnimation<Color>(AppColors.background),
                                                 ),
                                               ),
-                                              SizedBox(width: 10),
+                                              const SizedBox(width: 10),
                                               Text(
-                                                '正在透视情绪冰山与防御机制...',
-                                                style: TextStyle(
+                                                tr('analyzing'),
+                                                style: const TextStyle(
                                                   fontSize: 13.5,
                                                   fontWeight: FontWeight.w700,
                                                 ),
@@ -519,12 +536,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                           )
                                         : Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
-                                            children: const [
-                                              Icon(Icons.remove_red_eye_rounded, size: 18),
-                                              SizedBox(width: 8),
+                                            children: [
+                                              const Icon(Icons.remove_red_eye_rounded, size: 18),
+                                              const SizedBox(width: 8),
                                               Text(
-                                                '一键透视潜台词',
-                                                style: TextStyle(
+                                                tr('btn_decode'),
+                                                style: const TextStyle(
                                                   fontSize: 14.5,
                                                   fontWeight: FontWeight.w800,
                                                   letterSpacing: 0.4,
@@ -540,7 +557,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                         const SizedBox(height: 18),
 
-                        // Card 2: Secondary Card (今日社交残局)
+                        // Card 2: Secondary Card (Daily Dilemma)
                         DilemmaCard(
                           onTap: _openDilemmaChallenge,
                         ),
@@ -551,12 +568,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Row(
-                              children: const [
-                                Icon(Icons.history_rounded, size: 16, color: AppColors.warmBeige),
-                                SizedBox(width: 6),
+                              children: [
+                                const Icon(Icons.history_rounded, size: 16, color: AppColors.warmBeige),
+                                const SizedBox(width: 6),
                                 Text(
-                                  '最近解码历史 (最近10条)',
-                                  style: TextStyle(
+                                  tr('recent_history'),
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.textPrimary,
@@ -566,7 +583,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                             if (_historyList.isNotEmpty)
                               Text(
-                                '已缓存 ${_historyList.length} 条',
+                                tr('history_count', [_historyList.length.toString()]),
                                 style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                               ),
                           ],
@@ -583,17 +600,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               border: Border.all(color: AppColors.borderSubtle, width: 0.8),
                             ),
                             child: Column(
-                              children: const [
-                                Icon(Icons.inbox_outlined, size: 32, color: AppColors.textMuted),
-                                SizedBox(height: 8),
+                              children: [
+                                const Icon(Icons.inbox_outlined, size: 32, color: AppColors.textMuted),
+                                const SizedBox(height: 8),
                                 Text(
-                                  '暂无历史解码记录',
-                                  style: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                                  tr('empty_history_title'),
+                                  style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
                                 ),
-                                SizedBox(height: 4),
+                                const SizedBox(height: 4),
                                 Text(
-                                  '在上方输入对话，一键探寻未说出口的情绪',
-                                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                  tr('empty_history_sub'),
+                                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                                 ),
                               ],
                             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/dilemma_seed.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/dilemma_model.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -56,7 +57,7 @@ class _DilemmaChallengeScreenState extends State<DilemmaChallengeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('今日社交残局挑战'),
+        title: Text(tr('dilemma_title')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -84,7 +85,7 @@ class _DilemmaChallengeScreenState extends State<DilemmaChallengeScreen> {
                   ),
                 ),
                 Text(
-                  '第 ${_currentIndex + 1} / ${_dilemmas.length} 局',
+                  tr('dilemma_round', [(_currentIndex + 1).toString(), _dilemmas.length.toString()]),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -151,12 +152,12 @@ class _DilemmaChallengeScreenState extends State<DilemmaChallengeScreen> {
 
             // Prompt text
             Row(
-              children: const [
-                Icon(Icons.touch_app_rounded, size: 16, color: AppColors.warmBeige),
-                SizedBox(width: 6),
+              children: [
+                const Icon(Icons.touch_app_rounded, size: 16, color: AppColors.warmBeige),
+                const SizedBox(width: 6),
                 Text(
-                  '此时你会如何回应破局？（点击选择）',
-                  style: TextStyle(
+                  tr('dilemma_prompt'),
+                  style: const TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
@@ -263,7 +264,7 @@ class _DilemmaChallengeScreenState extends State<DilemmaChallengeScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '机制解析：${option.mechanism}',
+                                  tr('mechanism_analysis', [option.mechanism]),
                                   style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary, height: 1.4),
                                 ),
                               ],
@@ -291,7 +292,7 @@ class _DilemmaChallengeScreenState extends State<DilemmaChallengeScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: Text(
-                    _currentIndex < _dilemmas.length - 1 ? '挑战下一局' : '完成今日残局挑战',
+                    _currentIndex < _dilemmas.length - 1 ? tr('next_dilemma') : tr('finish_dilemma'),
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                 ),

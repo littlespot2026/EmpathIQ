@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/decode_result.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/iceberg_gauge.dart';
@@ -55,10 +56,10 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('潜台词与情绪冰山透视'),
+        title: Text(tr('report_title')),
         actions: [
           IconButton(
-            tooltip: '生成分享卡片',
+            tooltip: tr('save_share_card'),
             icon: const Icon(Icons.share_rounded, color: AppColors.warmBeige),
             onPressed: _navigateToPoster,
           ),
@@ -87,7 +88,7 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
                           ),
                         ),
                         child: Text(
-                          '人际维度 · ${widget.result.relationship}',
+                          widget.result.relationship,
                           style: const TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w700,
@@ -95,8 +96,8 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
                           ),
                         ),
                       ),
-                      Text(
-                        'EmpathIQ 深度认知解析',
+                      const Text(
+                        'EmpathIQ Cognitive AI',
                         style: TextStyle(
                           fontSize: 11,
                           color: AppColors.textMuted,
@@ -111,14 +112,14 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
                   IcebergGauge(result: widget.result),
                   const SizedBox(height: 20),
 
-                  // Section Title: 实战破局三策
+                  // Section Title: Tactical Response Strategies
                   Row(
-                    children: const [
-                      Icon(Icons.shield_outlined, size: 18, color: AppColors.amberSand),
-                      SizedBox(width: 8),
+                    children: [
+                      const Icon(Icons.shield_outlined, size: 18, color: AppColors.amberSand),
+                      const SizedBox(width: 8),
                       Text(
-                        '实战破局三策',
-                        style: TextStyle(
+                        tr('tactical_strategies'),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
@@ -128,9 +129,9 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
                     ],
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    '针对被动攻击或心防退缩，提供三套不同维度的即时回复与心理学机制：',
-                    style: TextStyle(
+                  Text(
+                    tr('strategies_sub'),
+                    style: const TextStyle(
                       fontSize: 11.5,
                       color: AppColors.textMuted,
                     ),
@@ -149,7 +150,7 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
                     const Center(
                       child: Padding(
                         padding: EdgeInsets.all(24),
-                        child: Text('暂无策略方案', style: TextStyle(color: AppColors.textMuted)),
+                        child: Text('No strategies found', style: TextStyle(color: AppColors.textMuted)),
                       ),
                     ),
 
@@ -183,7 +184,7 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
                     child: OutlinedButton.icon(
                       onPressed: _navigateToPoster,
                       icon: const Icon(Icons.photo_album_outlined, size: 17),
-                      label: const Text('保存分享卡片'),
+                      label: Text(tr('save_share_card')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.warmBeige,
                         side: const BorderSide(color: AppColors.warmBeige, width: 1),
@@ -205,7 +206,7 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
                     child: ElevatedButton.icon(
                       onPressed: _navigateToSandbox,
                       icon: const Icon(Icons.sports_kabaddi_rounded, size: 18),
-                      label: const Text('带入情境对练'),
+                      label: Text(tr('enter_sandbox')),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.warmBeige,
                         foregroundColor: AppColors.background,

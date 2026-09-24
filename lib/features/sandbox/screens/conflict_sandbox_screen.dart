@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/app_settings.dart';
 import '../../../core/models/chat_message.dart';
 import '../../../core/models/decode_result.dart';
@@ -39,9 +40,11 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
     _currentDefense = widget.decodeResult.defensePercent;
     _currentInnerThought = widget.decodeResult.initialNpcThought.isNotEmpty
         ? widget.decodeResult.initialNpcThought
-        : '他要是真不当回事，我就彻底不再抱希望了。';
+        : (AppLocale.instance.currentCode == 'zh'
+            ? '他要是真不当回事，我就彻底不再抱希望了。'
+            : 'If they really brush this off, I give up completely.');
 
-    _activeCoachingHint = '💡 对方防御值较高，优先倾听与复述感受，切忌自辩或讲大道理。';
+    _activeCoachingHint = tr('coaching_hint_default');
 
     _loadSettings();
     _initFirstMessage();
@@ -115,10 +118,9 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
       final int newDef = (feedback['new_defense_percent'] as num?)?.toInt() ??
           (_currentDefense + delta).clamp(10, 100);
       final String tag = feedback['feedback_tag'] as String? ?? '【情绪稳定】已接住对方话头';
-      final String thought = feedback['inner_thought'] as String? ?? '他在认真听我说...';
-      final String npcReply = feedback['npc_reply'] as String? ?? '行吧，你既然都这么说了...';
-      final String hint = feedback['coaching_hint'] as String? ??
-          '💡 继续肯定对方的情绪感受，巩固安全信任。';
+      final String thought = feedback['inner_thought'] as String? ?? 'Listening intently...';
+      final String npcReply = feedback['npc_reply'] as String? ?? '...';
+      final String hint = feedback['coaching_hint'] as String? ?? tr('coaching_hint_default');
 
       setState(() {
         _currentDefense = newDef;
@@ -182,14 +184,14 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('1分钟冲突对练沙盒'),
+        title: Text(tr('sandbox_title')),
         actions: [
           TextButton.icon(
             onPressed: _showSettlement,
             icon: const Icon(Icons.analytics_outlined, size: 16, color: AppColors.warmBeige),
-            label: const Text(
-              '结算复盘',
-              style: TextStyle(color: AppColors.warmBeige, fontSize: 13),
+            label: Text(
+              tr('settlement_review'),
+              style: const TextStyle(color: AppColors.warmBeige, fontSize: 13),
             ),
           ),
         ],
@@ -198,7 +200,7 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
         children: [
           // Fixed HUD Status Bar
           HudStatusBar(
-            characterName: '对方 (${widget.decodeResult.relationship})',
+            characterName: tr('opponent', [widget.decodeResult.relationship]),
             relationship: widget.decodeResult.relationship,
             defensePercent: _currentDefense,
             currentInnerThought: _currentInnerThought,
@@ -231,8 +233,8 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        SizedBox(
+                      children: [
+                        const SizedBox(
                           width: 12,
                           height: 12,
                           child: CircularProgressIndicator(
@@ -240,10 +242,10 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(AppColors.warmBeige),
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
-                          '对方正在经历心理防御动摇...',
-                          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          tr('analyzing'),
+                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -284,7 +286,7 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
                       side: const BorderSide(color: AppColors.borderSubtle, width: 0.8),
                       avatar: const Icon(Icons.bolt_rounded, size: 13, color: AppColors.warmBeige),
                       label: Text(
-                        '使用【${s.title}】话术',
+                        s.title,
                         style: const TextStyle(fontSize: 11, color: AppColors.textWarm),
                       ),
                       onPressed: () => _handleSendReply(s.actionText),
@@ -297,9 +299,9 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
           // Bottom Input Field
           Container(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 16),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.surface,
-              border: const Border(top: BorderSide(color: AppColors.borderSubtle, width: 0.8)),
+              border: Border(top: BorderSide(color: AppColors.borderSubtle, width: 0.8)),
             ),
             child: Row(
               children: [
@@ -308,7 +310,7 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
                     controller: _inputController,
                     style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: '输入你的回应，尝试瓦解对方心防...',
+                      hintText: tr('type_reply_hint'),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(22),
@@ -328,7 +330,7 @@ class _ConflictSandboxScreenState extends State<ConflictSandboxScreen> {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppColors.warmBeige,
                     shape: BoxShape.circle,
                   ),

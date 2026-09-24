@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/theme/app_colors.dart';
 
 class RelationshipChipGroup extends StatelessWidget {
@@ -12,10 +13,10 @@ class RelationshipChipGroup extends StatelessWidget {
   });
 
   static const List<Map<String, dynamic>> relationships = [
-    {'label': '伴侣', 'icon': Icons.favorite_rounded},
-    {'label': '职场/主管', 'icon': Icons.business_center_rounded},
-    {'label': '朋友', 'icon': Icons.people_alt_rounded},
-    {'label': '长辈/父母', 'icon': Icons.home_rounded},
+    {'id': 'partner', 'key': 'rel_partner', 'icon': Icons.favorite_rounded},
+    {'id': 'workplace', 'key': 'rel_workplace', 'icon': Icons.business_center_rounded},
+    {'id': 'friend', 'key': 'rel_friend', 'icon': Icons.people_alt_rounded},
+    {'id': 'family', 'key': 'rel_family', 'icon': Icons.home_rounded},
   ];
 
   @override
@@ -24,12 +25,13 @@ class RelationshipChipGroup extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: relationships.map((rel) {
-        final label = rel['label'] as String;
+        final key = rel['key'] as String;
+        final label = tr(key);
         final icon = rel['icon'] as IconData;
-        final isSelected = selectedRelationship == label;
+        final isSelected = selectedRelationship == key || selectedRelationship == label;
 
         return InkWell(
-          onTap: () => onSelected(label),
+          onTap: () => onSelected(key),
           borderRadius: BorderRadius.circular(20),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),

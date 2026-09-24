@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'core/localization/app_locale.dart';
 import 'core/services/storage_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/home/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Pre-initialize storage service
   await StorageService.getInstance();
+  await AppLocale.instance.init();
   runApp(const EmpathIQApp());
 }
 
@@ -15,11 +16,23 @@ class EmpathIQApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'EmpathIQ - 同理心与社交读心引擎',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      home: const HomeScreen(),
+    return ListenableBuilder(
+      listenable: AppLocale.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'EmpathIQ - ${tr('app_slogan')}',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.darkTheme,
+          locale: Locale(AppLocale.instance.currentCode),
+          builder: (context, child) {
+            return Directionality(
+              textDirection: AppLocale.instance.textDirection,
+              child: child!,
+            );
+          },
+          home: const HomeScreen(),
+        );
+      },
     );
   }
 }

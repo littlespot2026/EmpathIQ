@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../constants/prompt_constants.dart';
+import '../localization/app_locale.dart';
 import '../models/app_settings.dart';
 import '../models/chat_message.dart';
 import '../models/decode_result.dart';
@@ -50,6 +51,7 @@ class LLMService {
     required String relationship,
     required AppSettings settings,
   }) async {
+    final langName = AppLocale.instance.currentLanguage.name;
     final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-1.5-flash';
     final url = Uri.parse(
         '${settings.baseUrl}/v1beta/models/$model:generateContent?key=${settings.apiKey.trim()}');
@@ -57,11 +59,14 @@ class LLMService {
     final prompt = '''
 ${PromptConstants.systemPrompt}
 
-【当前待解码对话】：
-- 关系背景：$relationship
-- 说话内容：“$inputText”
+Language Instruction:
+Please output all JSON text content (surface_meaning, real_subtext, core_pain_point, strategy titles, action_text, mechanism, initial_npc_thought, initial_npc_speech) natively and fluently in: $langName.
 
-请输出符合 JSON Schema 约定的纯 JSON 结构。
+【Input Context】：
+- Relationship Context: $relationship
+- Utterance: "$inputText"
+
+Output pure JSON conforming strictly to the schema.
 ''';
 
     final body = jsonEncode({
@@ -105,14 +110,20 @@ ${PromptConstants.systemPrompt}
     required String relationship,
     required AppSettings settings,
   }) async {
+    final langName = AppLocale.instance.currentLanguage.name;
     final baseUrl = settings.baseUrl.trim().replaceAll(RegExp(r'/+$'), '');
     final url = Uri.parse('$baseUrl/chat/completions');
 
     final messages = [
-      {'role': 'system', 'content': PromptConstants.systemPrompt},
+      {
+        'role': 'system',
+        'content':
+            '${PromptConstants.systemPrompt}\n\nIMPORTANT: Output all field values (real_subtext, core_pain_point, strategies, action_text, mechanism, npc lines) in: $langName.'
+      },
       {
         'role': 'user',
-        'content': '关系背景：$relationship\n对方说：“$inputText”\n请以 JSON 结构输出深度潜台词剖析与破局三策。'
+        'content':
+            'Relationship context: $relationship\nSpeaker said: "$inputText"\nProvide in-depth subtext analysis and 3 breakthrough strategies in $langName, formatted as JSON.'
       }
     ];
 
@@ -154,18 +165,23 @@ ${PromptConstants.systemPrompt}
     // If real API configured
     if (settings.apiKey.trim().isNotEmpty && !settings.enableMockSimulation) {
       try {
+        final langName = AppLocale.instance.currentLanguage.name;
         final prompt = '''
 ${PromptConstants.sandboxFeedbackPrompt}
-【场景设定】：
-- 人际关系：$relationship
-- 初始引爆导火索：“$originalSubtext”
-- NPC 当前防御/怒气值：$currentDefense%
 
-【历史对话】：
-${history.map((m) => '${m.isUser ? "玩家" : "NPC"}: ${m.content}').join('\n')}
-玩家最新回复：“$userReply”
+Language Instruction:
+Please output feedback_tag, inner_thought, npc_reply, and coaching_hint fluently in: $langName.
 
-请依据玩家表现计算怒气增减(defense_delta)，给出心理评价与NPC回复。输出严格JSON。
+【Scenario Setting】：
+- Relationship Context: $relationship
+- Initial Trigger Phrase: "$originalSubtext"
+- NPC Current Defense/Anger: $currentDefense%
+
+【Conversation History】：
+${history.map((m) => '${m.isUser ? "User" : "NPC"}: ${m.content}').join('\n')}
+User Reply: "$userReply"
+
+Calculate defense_delta, provide psychological review tag, inner monologue, next NPC response, and coaching hint in $langName. Output strict pure JSON.
 ''';
         if (settings.provider == 'gemini') {
           final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-1.5-flash';
@@ -212,7 +228,15 @@ ${history.map((m) => '${m.isUser ? "玩家" : "NPC"}: ${m.content}').join('\n')}
         lower.contains('陪你') ||
         lower.contains('听你说') ||
         lower.contains('辛苦') ||
-        lower.contains('难受');
+        lower.contains('难受') ||
+        lower.contains('sorry') ||
+        lower.contains('apologize') ||
+        lower.contains('understand') ||
+        lower.contains('feeling') ||
+        lower.contains('heard') ||
+        lower.contains('listen') ||
+        lower.contains('care') ||
+        lower.contains('with you');
 
     final bool hasTriggerKeywords = lower.contains('你怎么又') ||
         lower.contains('随便') ||
@@ -221,7 +245,17 @@ ${history.map((m) => '${m.isUser ? "玩家" : "NPC"}: ${m.content}').join('\n')}
         lower.contains('烦不烦') ||
         lower.contains('无理取闹') ||
         lower.contains('行了行了') ||
-        lower.contains('我也没办法');
+        lower.contains('我也没办法') ||
+        lower.contains('whatever') ||
+        lower.contains('again') ||
+        lower.contains('annoying') ||
+        lower.contains('overreacting') ||
+        lower.contains('not a big deal') ||
+        lower.contains('deal with it') ||
+        lower.contains('calm down') ||
+        lower.contains('always');
+
+    final bool isZh = AppLocale.instance.currentCode == 'zh';
 
     int delta;
     String feedbackTag;
@@ -232,14 +266,26 @@ ${history.map((m) => '${m.isUser ? "玩家" : "NPC"}: ${m.content}').join('\n')}
     if (hasEmpathyKeywords && !hasTriggerKeywords) {
       delta = -20;
       final newDef = (currentDefense + delta).clamp(10, 100);
-      feedbackTag = '【怒气 -20%】精准识别情绪，心防瓦解';
-      innerThought = '原来他真的没有敷衍我，他能懂我的不易...';
-      if (newDef <= 30) {
-        npcReply = '好啦...我刚才也是太着急了，其实我只是想让你多在乎一下我的感受。';
-        coachingHint = '💡 对方心防已基本降至安全区，此刻提出共同解决方案最容易达成共识。';
+      if (isZh) {
+        feedbackTag = '【怒气 -20%】精准识别情绪，心防瓦解';
+        innerThought = '原来他真的没有敷衍我，他能懂我的不易...';
+        if (newDef <= 30) {
+          npcReply = '好啦...我刚才也是太着急了，其实我只是想让你多在乎一下我的感受。';
+          coachingHint = '💡 对方心防已基本降至安全区，此刻提出共同解决方案最容易达成共识。';
+        } else {
+          npcReply = '说得好听...不过听你这么讲，我心里确实没刚才那么堵了。那你打算怎么做？';
+          coachingHint = '💡 对方正在验证你的诚意，给出具体的行动步骤或时间承诺。';
+        }
       } else {
-        npcReply = '说得好听...不过听你这么讲，我心里确实没刚才那么堵了。那你打算怎么做？';
-        coachingHint = '💡 对方正在验证你的诚意，给出具体的行动步骤或时间承诺。';
+        feedbackTag = '【Tension -20%】Guard disarmed with genuine empathy';
+        innerThought = 'They really aren\'t brushing me off; they actually care how I feel...';
+        if (newDef <= 30) {
+          npcReply = 'Alright... I guess I was being reactive earlier too. I just really wanted to feel like my feelings mattered to you.';
+          coachingHint = '💡 Counterpart guard has dropped into the safe zone. Proposing a collaborative solution now is most effective.';
+        } else {
+          npcReply = 'That sounds nice... Hearing you say that actually helps take the edge off. So what are we going to do about it?';
+          coachingHint = '💡 They are testing your sincerity. Offer concrete action steps or a clear timeline.';
+        }
       }
       return {
         'defense_delta': delta,
@@ -252,10 +298,17 @@ ${history.map((m) => '${m.isUser ? "玩家" : "NPC"}: ${m.content}').join('\n')}
     } else if (hasTriggerKeywords) {
       delta = 15;
       final newDef = (currentDefense + delta).clamp(0, 100);
-      feedbackTag = '【怒气 +15%】触发自恋防御，对抗升级';
-      innerThought = '看吧，他根本没有半点耐心，果然是在应付我！';
-      npcReply = '行，你永远都是这套说辞！既然你觉得是我无理取闹，那我们也没什么好说的了！';
-      coachingHint = '⚠️ 警惕指责性字眼与说教，试着停下来先倾听，承认对方的挫败感。';
+      if (isZh) {
+        feedbackTag = '【怒气 +15%】触发自恋防御，对抗升级';
+        innerThought = '看吧，他根本没有半点耐心，果然是在应付我！';
+        npcReply = '行，你永远都是这套说辞！既然你觉得是我无理取闹，那我们也没什么好说的了！';
+        coachingHint = '⚠️ 警惕指责性字眼与说教，试着停下来先倾听，承认对方的挫败感。';
+      } else {
+        feedbackTag = '【Tension +15%】Defensive trigger hit, conflict escalated';
+        innerThought = 'See? Zero patience as usual. Completely brushing me off!';
+        npcReply = 'Right, it\'s always my fault! If you think I\'m just overreacting, then there\'s nothing left to talk about!';
+        coachingHint = '⚠️ Beware of dismissive phrasing or lecturing. Pause, listen, and acknowledge their frustration first.';
+      }
       return {
         'defense_delta': delta,
         'new_defense_percent': newDef,
@@ -268,10 +321,17 @@ ${history.map((m) => '${m.isUser ? "玩家" : "NPC"}: ${m.content}').join('\n')}
       // Neutral response
       delta = -8;
       final newDef = (currentDefense + delta).clamp(10, 100);
-      feedbackTag = '【怒气 -8%】情绪趋于平稳，保持耐心';
-      innerThought = '他在试着跟我沟通，但感觉还是有点官方...';
-      npcReply = '反正今天这事确实让我挺不痛快的，你先别急着下结论，先听我把话说完。';
-      coachingHint = '💡 试着运用复述技术：“你刚才提到...是感觉被忽视了对吗？”深化信任。';
+      if (isZh) {
+        feedbackTag = '【怒气 -8%】情绪趋于平稳，保持耐心';
+        innerThought = '他在试着跟我沟通，但感觉还是有点官方...';
+        npcReply = '反正今天这事确实让我挺不痛快的，你先别急着下结论，先听我把话说完。';
+        coachingHint = '💡 试着运用复述技术：“你刚才提到...是感觉被忽视了对吗？”深化信任。';
+      } else {
+        feedbackTag = '【Tension -8%】Emotions steadying, stay patient';
+        innerThought = 'They’re trying to communicate, though it still feels a bit formal...';
+        npcReply = 'Look, this whole thing really bothered me. Don’t jump to conclusions yet—just hear me out.';
+        coachingHint = '💡 Try reflective listening: “You felt overlooked earlier, right?” to deepen rapport.';
+      }
       return {
         'defense_delta': delta,
         'new_defense_percent': newDef,
@@ -329,27 +389,52 @@ ${history.map((m) => '${m.isUser ? "玩家" : "NPC"}: ${m.content}').join('\n')}
     }
 
     if (strategies.isEmpty) {
-      strategies.addAll([
-        const DecodeStrategy(
-          type: 'empathy',
-          title: '稳妥共情牌',
-          actionText: '我能感到你现在有些失落。手头的事我先放下，能跟我说说你心里的真实想法吗？',
-          mechanism: '通过放下手头事务打破对方的冷漠预期，迅速建立情绪安全港。',
-        ),
-        const DecodeStrategy(
-          type: 'humor',
-          title: '幽默破冰牌',
-          actionText: '报告！雷达已捕获紧急信号，我哪敢走开，快给我一个为你揉肩泡茶戴罪立功的机会吧~',
-          mechanism: '用角色扮演和轻松自嘲化解剑拔弩张的对抗僵局。',
-        ),
-        const DecodeStrategy(
-          type: 'boundary',
-          title: '温和界限牌',
-          actionText: '我珍惜我们的关系，如果你现在需要独处我尊重你的节奏；当你准备好了我们随时敞开聊聊。',
-          mechanism: '既给予空间，又坚定拒绝猜心游戏，确立成熟边界。',
-        ),
-      ]);
+      if (AppLocale.instance.currentCode == 'zh') {
+        strategies.addAll([
+          const DecodeStrategy(
+            type: 'empathy',
+            title: '稳妥共情牌',
+            actionText: '我能感到你现在有些失落。手头的事我先放下，能跟我说说你心里的真实想法吗？',
+            mechanism: '通过放下手头事务打破对方的冷漠预期，迅速建立情绪安全港。',
+          ),
+          const DecodeStrategy(
+            type: 'humor',
+            title: '幽默破冰牌',
+            actionText: '报告！雷达已捕获紧急信号，我哪敢走开，快给我一个为你揉肩泡茶戴罪立功的机会吧~',
+            mechanism: '用角色扮演和轻松自嘲化解剑拔弩张的对抗僵局。',
+          ),
+          const DecodeStrategy(
+            type: 'boundary',
+            title: '温和界限牌',
+            actionText: '我珍惜我们的关系，如果你现在需要独处我尊重你的节奏；当你准备好了我们随时敞开聊聊。',
+            mechanism: '既给予空间，又坚定拒绝猜心游戏，确立成熟边界。',
+          ),
+        ]);
+      } else {
+        strategies.addAll([
+          const DecodeStrategy(
+            type: 'empathy',
+            title: 'Strategy A · Safe Empathy',
+            actionText: 'I can sense you feel hurt right now. Let me set aside what I\'m doing—could you tell me what\'s on your mind?',
+            mechanism: 'Disrupts their expectation of indifference by physically pausing tasks, instantly establishing emotional safety.',
+          ),
+          const DecodeStrategy(
+            type: 'humor',
+            title: 'Strategy B · Humorous Icebreaker',
+            actionText: 'Red Alert! EmpathIQ sensor just caught a high-level tension signal! I wouldn\'t dare walk away—let me brew you a warm cup of tea~',
+            mechanism: 'Diffuses deadlock through playful warmth and eliminates adversarial tension.',
+          ),
+          const DecodeStrategy(
+            type: 'boundary',
+            title: 'Strategy C · Gentle Boundary',
+            actionText: 'I truly value our relationship. If you need some quiet space right now I respect that; whenever you\'re ready, let\'s talk openly.',
+            mechanism: 'Offers space while firmly declining guessing games, establishing healthy adult boundaries.',
+          ),
+        ]);
+      }
     }
+
+    final isZh = AppLocale.instance.currentCode == 'zh';
 
     return DecodeResult(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -363,13 +448,219 @@ ${history.map((m) => '${m.isUser ? "玩家" : "NPC"}: ${m.content}').join('\n')}
       realSubtext: subtext,
       corePainPoint: pain,
       strategies: strategies,
-      initialNpcThought: json['initial_npc_thought'] as String? ?? '他要是真不管我，今天就彻底完了。',
-      initialNpcSpeech: json['initial_npc_speech'] as String? ?? '不用管我，反正我怎么想的一点都不重要。',
+      initialNpcThought: json['initial_npc_thought'] as String? ??
+          (isZh ? '他要是真不管我，今天就彻底完了。' : 'If they really walk away now, we are completely done.'),
+      initialNpcSpeech: json['initial_npc_speech'] as String? ??
+          (isZh ? '不用管我，反正我怎么想的一点都不重要。' : 'Don\'t bother with me. What I think doesn\'t matter anyway.'),
     );
   }
 
   /// Context-aware smart mock data generation
   DecodeResult _generateContextualMockResult(String input, String rel) {
+    if (AppLocale.instance.currentCode == 'zh') {
+      return _generateChineseMockResult(input, rel);
+    }
+    return _generateEnglishMockResult(input, rel);
+  }
+
+  DecodeResult _generateEnglishMockResult(String input, String rel) {
+    final lower = input.toLowerCase();
+    final lowerRel = rel.toLowerCase();
+
+    int temp = 68;
+    int defense = 75;
+    String surface = input;
+    String subtext;
+    String pain;
+    String thought;
+    String speech;
+    List<DecodeStrategy> strategies;
+
+    if (lower.contains('fine') ||
+        lower.contains('whatever') ||
+        lower.contains('nothing') ||
+        lower.contains('never mind') ||
+        lower.contains('leave me alone') ||
+        lowerRel.contains('partner') ||
+        lowerRel.contains('伴侣')) {
+      temp = 78;
+      defense = 85;
+      subtext =
+          'I am feeling deeply hurt, unseen, and emotionally disconnected. Saying "I am fine" is a test to see if you actually care enough to notice. If you take it literally and walk away, it will confirm my deepest fear—that I truly don\'t matter to you.';
+      pain =
+          'Deep emotional vulnerability and craving for unconditional reassurance, combined with the fear that expressing need will lead to dismissal.';
+      thought =
+          'If they just say "okay cool" and walk away, I am going to completely shut down.';
+      speech =
+          'Don\'t worry about me. Go attend to your important stuff. I\'m used to handling things alone anyway.';
+      strategies = [
+        const DecodeStrategy(
+          type: 'empathy',
+          title: 'Strategy A · Safe Empathy',
+          actionText:
+              '“How could you be fine? Seeing you like this breaks my heart. Whatever I was doing can wait—you matter way more. Come sit with me; tell me what you\'re feeling.”',
+          mechanism:
+              '【Reverse Expectation Disruption】: Shatters the counterpart\'s fear of neglect by deliberately halting tasks and offering immediate emotional priority.',
+        ),
+        const DecodeStrategy(
+          type: 'humor',
+          title: 'Strategy B · Humorous Icebreaker',
+          actionText:
+              '“Red Alert! EmpathIQ sensor just caught a Category 5 \'I\'m Fine\' alarm! I wouldn\'t dare walk away—grant me a chance to brew you tea and make amends~”',
+          mechanism:
+              '【Low-Stakes Desensitization】: Diffuses adversarial tension through playful self-deprecation, lowering defensive ego and creating an easy off-ramp to smile.',
+        ),
+        const DecodeStrategy(
+          type: 'boundary',
+          title: 'Strategy C · Gentle Boundary',
+          actionText:
+              '“I can sense heavy emotions right now, and I genuinely want to talk it through. If you need some quiet space first, I respect that—I\'ll be right here whenever you\'re ready.”',
+          mechanism:
+              '【Warm Yet Firm】: Declines passive-aggressive mind games while maintaining an unwavering, dependable presence and clear adult boundaries.',
+        ),
+      ];
+    } else if (lowerRel.contains('work') ||
+        lowerRel.contains('boss') ||
+        lowerRel.contains('职场') ||
+        lower.contains('as you wish') ||
+        lower.contains('up to you')) {
+      temp = 55;
+      defense = 65;
+      subtext =
+          'I have serious reservations about this delivery or progress, but I don\'t want to spend extra energy micromanaging right now. If you turn this in as is, you bear full responsibility for any fallout.';
+      pain =
+          'Loss of control and risk aversion; lack of confidence in subordinate delivery execution.';
+      thought =
+          'Why are they missing the core risk? This proposal will run into serious pushback.';
+      speech =
+          'Fine, if you think this proposal is good to go, proceed on your own judgment.';
+      strategies = [
+        const DecodeStrategy(
+          type: 'empathy',
+          title: 'Strategy A · Safe Empathy',
+          actionText:
+              '“I sense you have reservations about the delivery timeline and conversion risks. I\'ve structured Options A and B with risk hedges—could I get 3 minutes of your direction to align?”',
+          mechanism:
+              '【Proactive Risk Absorption】: Relieves managerial anxiety by offering structured options, instantly creating a dependable, professional impression.',
+        ),
+        const DecodeStrategy(
+          type: 'humor',
+          title: 'Strategy B · Humorous Icebreaker',
+          actionText:
+              '“From that look, I know this draft hasn\'t earned your gold star yet! Give me two pointers and I\'ll polish it into something we\'re both proud of.”',
+          mechanism:
+              '【Positive Reframing】: Reframes critique into mentorship, preserving authority while demonstrating high coachability and resilience.',
+        ),
+        const DecodeStrategy(
+          type: 'boundary',
+          title: 'Strategy C · Gentle Boundary',
+          actionText:
+              '“Understood. To ensure our delivery meets expectations, I\'ve outlined the key milestones and resource requirements in writing. If aligned, I will proceed on this baseline.”',
+          mechanism:
+              '【Written Alignment Guard】: Uses objective facts and documented milestones to prevent retroactive ambiguity or blame shifting.',
+        ),
+      ];
+    } else if (lowerRel.contains('family') ||
+        lowerRel.contains('parent') ||
+        lowerRel.contains('长辈') ||
+        lower.contains('busy') ||
+        lower.contains('don\'t worry')) {
+      temp = 42;
+      defense = 70;
+      subtext =
+          'I miss you dearly and feel increasingly disconnected from your fast-paced life, but I dread being a burden, so I put on a stoic front to mask loneliness and vulnerability.';
+      pain =
+          'Deep fear of becoming irrelevant or an emotional burden to their grown children as they age.';
+      thought =
+          'They are all grown up and busy with their own lives. We barely get to see them anymore.';
+      speech =
+          'Go take care of your career. Don\'t worry about us; we have everything we need at home.';
+      strategies = [
+        const DecodeStrategy(
+          type: 'empathy',
+          title: 'Strategy A · Safe Empathy',
+          actionText:
+              '“Hearing you say that tugs at my heart. Work is never more important than family. I\'m booking a ticket right now and coming home this weekend for your home-cooked meal!”',
+          mechanism:
+              '【Anchoring to Primary Nurturing】: Reactivates the parent\'s primary caring instinct (cooking/care), restoring their pride and sense of purpose.',
+        ),
+        const DecodeStrategy(
+          type: 'humor',
+          title: 'Strategy B · Humorous Icebreaker',
+          actionText:
+              '“Listen to that formal tone—anyone would think I wasn\'t your kid! You can\'t shake me off that easily. I\'m coming over to raid the fridge this weekend!”',
+          mechanism:
+              '【Playful Child Role】: Stepping back into the role of the cared-for child dissolves generational stiffness instantly.',
+        ),
+        const DecodeStrategy(
+          type: 'boundary',
+          title: 'Strategy C · Gentle Boundary',
+          actionText:
+              '“I\'m in the final sprint of this project through Thursday. Once it wraps on Friday evening, let\'s do a dedicated 30-minute video call so we can catch up properly.”',
+          mechanism:
+              '【Predictable Commitment Anchor】: Provides an explicit, guaranteed commitment node, allowing parents to feel prioritized without disrupting work sprints.',
+        ),
+      ];
+    } else {
+      // General Friend/Social
+      temp = 62;
+      defense = 68;
+      subtext =
+          'I don\'t fully agree with your perspective or current choice, but I don\'t want to create social tension, so I\'m keeping a safe, polite distance.';
+      pain =
+          'Fear of interpersonal conflict rupturing superficial harmony; subconscious reluctance to risk disagreement.';
+      thought =
+          'Since we are not on the same page, it is safer to wrap this up cordially.';
+      speech =
+          'Sounds great, whatever works for you! At the end of the day, it\'s your call.';
+      strategies = [
+        const DecodeStrategy(
+          type: 'empathy',
+          title: 'Strategy A · Safe Empathy',
+          actionText:
+              '“We\'ve known each other for years, and your honest opinion is what I value most. Are you seeing blind spots I missed? Don\'t hold back—I want your unfiltered view.”',
+          mechanism:
+              '【Emotional Immunity Grant】: Actively removes the counterpart\'s fear of conflict, granting explicit psychological permission to speak frankly.',
+        ),
+        const DecodeStrategy(
+          type: 'humor',
+          title: 'Strategy B · Humorous Icebreaker',
+          actionText:
+              '“Whoa, why so polite all of a sudden? Who are you and what have you done with my friend? I\'m buying coffee right now so you can ruthlessly roast my idea!”',
+          mechanism:
+              '【Informal Re-anchoring】: Uses playful penalty rituals (coffee/drinks) to bring the dialogue back into comfortable camaraderie.',
+        ),
+        const DecodeStrategy(
+          type: 'boundary',
+          title: 'Strategy C · Gentle Boundary',
+          actionText:
+              '“Thanks for sharing your perspective! Everyone\'s situation is different, and I\'ve weighed the risks. Even if I stumble, it\'s a lesson I need to experience. Let\'s hang out soon!”',
+          mechanism:
+              '【Separation of Tasks】: Adlerian task separation—gratefully receives feedback while preventing another\'s hesitation from eroding personal agency.',
+        ),
+      ];
+    }
+
+    final level = AppColors.getTemperatureLevelName(temp);
+
+    return DecodeResult(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      createdAt: DateTime.now(),
+      inputText: input,
+      relationship: rel,
+      temperature: temp,
+      temperatureLevel: level,
+      defensePercent: defense,
+      surfaceMeaning: surface,
+      realSubtext: subtext,
+      corePainPoint: pain,
+      strategies: strategies,
+      initialNpcThought: thought,
+      initialNpcSpeech: speech,
+    );
+  }
+
+  DecodeResult _generateChineseMockResult(String input, String rel) {
     final lower = input.toLowerCase();
 
     // Default values tailored to relationships

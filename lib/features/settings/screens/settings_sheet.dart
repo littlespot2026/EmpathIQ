@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_locale.dart';
 import '../../../core/models/app_settings.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -67,8 +68,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
     if (mounted) {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('配置已保存生效！'),
+        SnackBar(
+          content: Text(tr('settings_saved')),
           backgroundColor: AppColors.surfaceHighlight,
         ),
       );
@@ -81,8 +82,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
     widget.onSaved();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('已重置今日透视配额为 3 次！'),
+        SnackBar(
+          content: Text(tr('quota_reset_toast')),
           backgroundColor: AppColors.empathyGreenSubtle,
         ),
       );
@@ -112,12 +113,12 @@ class _SettingsSheetState extends State<SettingsSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  children: const [
-                    Icon(Icons.tune_rounded, size: 20, color: AppColors.warmBeige),
-                    SizedBox(width: 8),
+                  children: [
+                    const Icon(Icons.tune_rounded, size: 20, color: AppColors.warmBeige),
+                    const SizedBox(width: 8),
                     Text(
-                      'AI 引擎与配置',
-                      style: TextStyle(
+                      tr('settings_title'),
+                      style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -133,10 +134,58 @@ class _SettingsSheetState extends State<SettingsSheet> {
             ),
             const SizedBox(height: 16),
 
+            // Language Selector Section
+            Text(
+              tr('language_select'),
+              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: AppLocale.supportedLanguages.map((lang) {
+                final isSelected = lang.code == AppLocale.instance.currentCode;
+                return InkWell(
+                  onTap: () {
+                    AppLocale.instance.setLanguage(lang.code);
+                    setState(() {});
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6.5),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.warmBeige.withValues(alpha: 0.15) : AppColors.surfaceElevated,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? AppColors.warmBeige : AppColors.borderSubtle,
+                        width: isSelected ? 1.5 : 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(lang.flag, style: const TextStyle(fontSize: 13)),
+                        const SizedBox(width: 6),
+                        Text(
+                          lang.name,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected ? AppColors.warmBeige : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+
             // Provider selection
-            const Text(
-              '接口协议 (API Protocol)',
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+            Text(
+              tr('api_protocol'),
+              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 8),
             Row(
@@ -151,7 +200,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _buildChoiceChip(
-                    'OpenAI 格式接口',
+                    'OpenAI Compatible',
                     _provider == 'openai',
                     () => _onProviderChanged('openai'),
                   ),
@@ -166,10 +215,10 @@ class _SettingsSheetState extends State<SettingsSheet> {
               obscureText: true,
               style: const TextStyle(fontSize: 13.5, color: AppColors.textPrimary),
               decoration: InputDecoration(
-                labelText: 'API 密钥 (API_KEY)',
+                labelText: tr('api_key_label'),
                 hintText: _provider == 'gemini' ? 'AIzaSy...' : 'sk-...',
                 prefixIcon: const Icon(Icons.key_rounded, size: 18, color: AppColors.warmBeige),
-                helperText: '密钥仅保存在设备本地，绝不上云',
+                helperText: tr('api_key_helper'),
                 helperStyle: const TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
             ),
@@ -179,9 +228,9 @@ class _SettingsSheetState extends State<SettingsSheet> {
             TextField(
               controller: _baseUrlController,
               style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                labelText: 'API 端点 (Base URL)',
-                prefixIcon: Icon(Icons.dns_rounded, size: 18, color: AppColors.amberSand),
+              decoration: InputDecoration(
+                labelText: tr('base_url_label'),
+                prefixIcon: const Icon(Icons.dns_rounded, size: 18, color: AppColors.amberSand),
               ),
             ),
             const SizedBox(height: 12),
@@ -190,9 +239,9 @@ class _SettingsSheetState extends State<SettingsSheet> {
             TextField(
               controller: _modelController,
               style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-              decoration: const InputDecoration(
-                labelText: '模型名称 (Model)',
-                prefixIcon: Icon(Icons.psychology_rounded, size: 18, color: AppColors.humorViolet),
+              decoration: InputDecoration(
+                labelText: tr('model_label'),
+                prefixIcon: const Icon(Icons.psychology_rounded, size: 18, color: AppColors.humorViolet),
               ),
             ),
             const SizedBox(height: 14),
@@ -211,19 +260,19 @@ class _SettingsSheetState extends State<SettingsSheet> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          '免 Key 智能心理学沙盒模式',
-                          style: TextStyle(
+                          tr('mock_mode_title'),
+                          style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
-                          '未填 Key 或断网时，自动启用高质量本地情境引擎',
-                          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          tr('mock_mode_desc'),
+                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                         ),
                       ],
                     ),
@@ -246,7 +295,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
             OutlinedButton.icon(
               onPressed: _resetQuota,
               icon: const Icon(Icons.refresh_rounded, size: 16),
-              label: const Text('【测试调试】重置今日 3 次免费额度'),
+              label: Text(tr('reset_quota_btn')),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.amberSand,
                 side: const BorderSide(color: AppColors.borderLight),
@@ -268,7 +317,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('保存并应用设置', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                child: Text(tr('save_settings_btn'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
               ),
             ),
           ],
