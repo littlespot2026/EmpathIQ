@@ -54,8 +54,8 @@
 - 单选推演，即刻揭晓避坑机制与高段位破局逻辑。
 
 ### 6. AI 引擎与设置配置 (Settings)
-- 支持无缝切换 **Google Gemini API** (`gemini-1.5-flash`, `gemini-2.0-flash` 等) 与 **OpenAI 兼容接口** (`gpt-4o-mini`, DeepSeek, 通义千问等)。
-- 密钥仅保存在本地设备 `SharedPreferences`，严禁硬编码。
+- 支持无缝切换 **Google Gemini API** (`gemini-3.5-flash`, `gemini-3.5-flash-lite` 等，经由 Vercel 安全 Serverless 代理接入) 与 **OpenAI 兼容接口** (`gpt-4o-mini`, DeepSeek, 通义千问等)。
+- 密钥由 Vercel 环境变量安全管理，或由用户在本地设备 `SharedPreferences` 保存，严禁前端硬编码。
 - **免 Key 智能心理学模拟模式**：未填 Key 或离线状态下自动启用预设心理学推演引擎，开箱即用。
 - 提供“重置今日 3 次额度”便捷调试按钮。
 

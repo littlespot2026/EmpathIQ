@@ -43021,7 +43021,7 @@ a6i(a,b,c,d){var s=0,r=A.N(t.q2),q,p=this,o,n,m,l,k,j,i
 var $async$tm=A.O(function(e,f){if(e===1)return A.K(f,r)
 for(;;)switch(s){case 0:j=$.ax().guJ()
 i=c.d
-i=i.length!==0?i:"gemini-1.5-flash"
+i=i.length!==0?i:"gemini-3.5-flash"
 o=d?A.Px().X("/api/gemini"):A.h_(c.c+"/v1beta/models/"+i+":generateContent?key="+B.c.dw(c.a))
 n=t.N
 m=t.K
@@ -43067,7 +43067,7 @@ case 3:p=6
 m=$.ax().guJ().b
 l='\u4f60\u662f\u5728\u7ebf\u5fc3\u7406\u5bf9\u6297\u6c99\u76d2\u7684\u88c1\u5224\u517cNPC\u9a71\u52a8\u5f15\u64ce\u3002\n\u8bf7\u6839\u636e\u5f53\u524d\u89d2\u8272\u5173\u7cfb\u3001\u60c5\u7eea\u8bbe\u5b9a\u4e0e\u73a9\u5bb6\u7684\u6700\u65b0\u56de\u590d\uff0c\u751f\u6210NPC\u7684\u5373\u65f6\u53cd\u5e94\u4e0e\u60c5\u7eea\u6570\u503c\u53d8\u5316\u3002\n\u8f93\u51fa\u5fc5\u987b\u4e3a\u4e25\u683c JSON\uff1a\n{\n  "defense_delta": -15, // \u6012\u6c14/\u9632\u5fa1\u589e\u51cf\u503c\uff08\u8d1f\u6570\u4ee3\u8868\u6012\u6c14\u4e0b\u964d\u9632\u5fa1\u74e6\u89e3\uff0c\u6b63\u6570\u4ee3\u8868\u6012\u6c14\u4e0a\u5347\u88ab\u6fc0\u6012\uff09\n  "new_defense_percent": 65, // \u66f4\u65b0\u540e\u7684\u9632\u5fa1\u503c(0~100)\n  "feedback_tag": "\u3010\u6012\u6c14 -15%\u3011\u5171\u60c5\u7cbe\u51c6\uff0c\u74e6\u89e3\u4e86\u653b\u51fb\u6027", // \u7b80\u77ed\u6709\u529b\u70b9\u8bc4\n  "inner_thought": "\u4ed6\u5c45\u7136\u771f\u7684\u542c\u61c2\u4e86\u6211\u7684\u59d4\u5c48...", // NPC\u6b64\u65f6\u6b64\u523b\u672a\u8bf4\u51fa\u53e3\u7684\u5fc3\u58f0\n  "npc_reply": "\u54fc\uff0c\u7b97\u4f60\u6709\u70b9\u826f\u5fc3...\u4f46\u6211\u521a\u624d\u786e\u5b9e\u633a\u96be\u53d7\u7684\u3002", // NPC\u8bf4\u51fa\u7684\u4e0b\u4e00\u53e5\u8bdd\n  "coaching_hint": "\ud83d\udca1 \u5bf9\u65b9\u5df2\u5f00\u59cb\u5378\u4e0b\u5fc3\u9632\uff0c\u6b64\u65f6\u4e58\u80dc\u8ffd\u51fb\u590d\u8ff0\u5bf9\u65b9\u611f\u53d7\uff0c\u5207\u5fcc\u6025\u4e8e\u8bb2\u5927\u9053\u7406\u8fa9\u89e3\u3002"\n}\n\n\nLanguage Instruction:\nPlease output feedback_tag, inner_thought, npc_reply, and coaching_hint fluently in: '+A.k(m)+".\n\n\u3010Scenario Setting\u3011\uff1a\n- Relationship Context: "+a4+'\n- Initial Trigger Phrase: "'+a3+'"\n- NPC Current Defense/Anger: '+a1+"%\n\n\u3010Conversation History\u3011\uff1a\n"+new A.a3(a2,new A.a6n(),A.Z(a2).i("a3<1,q>")).bp(0,"\n")+'\nUser Reply: "'+a6+'"\n\nCalculate defense_delta, provide psychological review tag, inner monologue, next NPC response, and coaching hint in '+A.k(m)+". Output strict pure JSON.\n"
 e=a5.d
-k=e.length!==0?e:"gemini-1.5-flash"
+k=e.length!==0?e:"gemini-3.5-flash"
 j=null
 d=B.c.dw(a5.a)
 if(d.length!==0)j=A.h_(a5.c+"/v1beta/models/"+A.k(k)+":generateContent?key="+d)
@@ -43406,20 +43406,21 @@ s=2
 return A.H(t.Sg.b(p)?p:A.cM(p,t.X7),$async$zW)
 case 2:return A.L(null,r)}})
 return A.M($async$zW,r)},
-wp(){var s,r,q,p,o,n,m=$.dh,l=m==null?null:A.bg(m.a.h(0,"empathiq_settings"))
-if(l==null||l.length===0)return B.hk
-try{s=t.a.a(B.aK.mG(l,null))
-m=s
-r=A.bg(m.h(0,"api_key"))
-if(r==null)r=""
-q=A.bg(m.h(0,"provider"))
-if(q==null)q="gemini"
-p=A.bg(m.h(0,"base_url"))
-if(p==null)p=u.s
-o=A.bg(m.h(0,"model_name"))
-if(o==null)o="gemini-1.5-flash"
-m=A.h5(m.h(0,"enable_mock_simulation"))
-return new A.xp(r,q,p,o,m===!0)}catch(n){return B.hk}},
+wp(){var s,r,q,p,o,n,m,l="gemini-3.5-flash",k=$.dh,j=k==null?null:A.bg(k.a.h(0,"empathiq_settings"))
+if(j==null||j.length===0)return B.hk
+try{s=t.a.a(B.aK.mG(j,null))
+k=s
+r=A.bg(k.h(0,"model_name"))
+if(r==null)r=l
+q=B.c.m(r,"1.5")||B.c.m(r,"2.0")||B.c.m(r,"2.5")?l:r
+p=A.bg(k.h(0,"api_key"))
+if(p==null)p=""
+o=A.bg(k.h(0,"provider"))
+if(o==null)o="gemini"
+n=A.bg(k.h(0,"base_url"))
+if(n==null)n=u.s
+k=A.h5(k.h(0,"enable_mock_simulation"))
+return new A.xp(p,o,n,q,k===!0)}catch(m){return B.hk}},
 wu(a){return this.a_J(a)},
 a_J(a){var s=0,r=A.N(t.H),q,p
 var $async$wu=A.O(function(b,c){if(b===1)return A.K(c,r)
@@ -44963,7 +44964,7 @@ r.r=q
 s=r.e
 r=r.f
 if(q==="gemini"){s.sc0(u.s)
-r.sc0("gemini-1.5-flash")}else{s.sc0("https://api.openai.com/v1")
+r.sc0("gemini-3.5-flash")}else{s.sc0("https://api.openai.com/v1")
 r.sc0("gpt-4o-mini")}},
 $S:0}
 A.arT.prototype={
@@ -93833,7 +93834,7 @@ B.ce=new A.iq(1,"resumed")
 B.hi=new A.iq(2,"inactive")
 B.hj=new A.iq(3,"hidden")
 B.k2=new A.iq(4,"paused")
-B.hk=new A.xp("","gemini",u.s,"gemini-1.5-flash",!1)
+B.hk=new A.xp("","gemini",u.s,"gemini-3.5-flash",!1)
 B.Cz=new A.a_8(!1,127)
 B.CA=new A.a_9(127)
 B.k3=new A.xr(0,"polite")

@@ -66,7 +66,7 @@ class LLMService {
     bool useProxy = false,
   }) async {
     final langName = AppLocale.instance.currentLanguage.name;
-    final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-1.5-flash';
+    final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-3.5-flash';
 
     final Uri url;
     if (useProxy) {
@@ -204,7 +204,7 @@ User Reply: "$userReply"
 
 Calculate defense_delta, provide psychological review tag, inner monologue, next NPC response, and coaching hint in $langName. Output strict pure JSON.
 ''';
-        final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-1.5-flash';
+        final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-3.5-flash';
         final Uri url;
         if (settings.hasCustomApiKey) {
           url = Uri.parse(

@@ -9,7 +9,7 @@ class AppSettings {
     this.apiKey = '',
     this.provider = 'gemini',
     this.baseUrl = 'https://generativelanguage.googleapis.com',
-    this.modelName = 'gemini-1.5-flash',
+    this.modelName = 'gemini-3.5-flash',
     this.enableMockSimulation = false,
   });
 
@@ -49,11 +49,15 @@ class AppSettings {
   }
 
   factory AppSettings.fromMap(Map<String, dynamic> map) {
+    final rawModel = map['model_name'] as String? ?? 'gemini-3.5-flash';
+    final isLegacy = rawModel.contains('1.5') || rawModel.contains('2.0') || rawModel.contains('2.5');
+    final normalizedModel = isLegacy ? 'gemini-3.5-flash' : rawModel;
+
     return AppSettings(
       apiKey: map['api_key'] as String? ?? '',
       provider: map['provider'] as String? ?? 'gemini',
       baseUrl: map['base_url'] as String? ?? 'https://generativelanguage.googleapis.com',
-      modelName: map['model_name'] as String? ?? 'gemini-1.5-flash',
+      modelName: normalizedModel,
       enableMockSimulation: map['enable_mock_simulation'] as bool? ?? false,
     );
   }

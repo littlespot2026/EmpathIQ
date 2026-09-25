@@ -61,7 +61,12 @@ module.exports = async function handler(req, res) {
     }
     body = body || {};
 
-    const model = body.model || 'gemini-1.5-flash';
+    let model = body.model || 'gemini-3.5-flash';
+    // Remap deprecated or discontinued model identifiers to active stable models
+    if (model.includes('1.5') || model.includes('2.0') || model.includes('2.5')) {
+      model = 'gemini-3.5-flash';
+    }
+
     const contents = body.contents;
     const prompt = body.prompt;
     const generationConfig = body.generationConfig || {
@@ -85,30 +90,44 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Request body must contain "contents" or "prompt".' });
     }
 
-    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+    async function callUpstream(modelName) {
+      const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey.trim()}`;
+      const upstreamResponse = await fetch(geminiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
 
-    const upstreamResponse = await fetch(geminiEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const responseText = await upstreamResponse.text();
-    let responseData;
-    try {
-      responseData = JSON.parse(responseText);
-    } catch (_) {
-      responseData = { rawResponse: responseText };
+      const responseText = await upstreamResponse.text();
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (_) {
+        responseData = { rawResponse: responseText };
+      }
+      return { status: upstreamResponse.status, ok: upstreamResponse.ok, data: responseData };
     }
 
-    if (!upstreamResponse.ok) {
-      console.error('[Gemini Proxy] Upstream API error:', upstreamResponse.status, responseData);
-      return res.status(upstreamResponse.status).json(responseData);
+    let result = await callUpstream(model);
+
+    // If deprecated (404) or high demand (503), automatically attempt fallback
+    if (!result.ok && (result.status === 404 || result.status === 503)) {
+      const fallbackModel = model === 'gemini-3.5-flash' ? 'gemini-3.5-flash-lite' : 'gemini-3.5-flash';
+      console.warn(`[Gemini Proxy] Model ${model} returned status ${result.status}, trying fallback ${fallbackModel}`);
+      const fallbackResult = await callUpstream(fallbackModel);
+      if (fallbackResult.ok) {
+        result = fallbackResult;
+      }
     }
 
-    return res.status(200).json(responseData);
+    if (!result.ok) {
+      console.error('[Gemini Proxy] Upstream API error:', result.status, result.data);
+      return res.status(result.status).json(result.data);
+    }
+
+    return res.status(200).json(result.data);
   } catch (error) {
     console.error('[Gemini Proxy] Uncaught handler error:', error);
     return res.status(500).json({

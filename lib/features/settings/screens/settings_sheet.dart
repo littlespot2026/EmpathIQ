@@ -86,7 +86,7 @@ class _SettingsSheetState extends State<SettingsSheet> {
       _provider = provider;
       if (provider == 'gemini') {
         _baseUrlController.text = 'https://generativelanguage.googleapis.com';
-        _modelController.text = 'gemini-1.5-flash';
+        _modelController.text = 'gemini-3.5-flash';
       } else {
         _baseUrlController.text = 'https://api.openai.com/v1';
         _modelController.text = 'gpt-4o-mini';
