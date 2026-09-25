@@ -16,16 +16,27 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed. Please use POST.' });
-  }
-
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || !apiKey.trim()) {
     console.error('[Gemini Proxy] Missing GEMINI_API_KEY in environment variables.');
     return res.status(500).json({
       error: 'GEMINI_API_KEY is not configured in Vercel environment variables.'
     });
+  }
+
+  // Allow GET to list available models for this key
+  if (req.method === 'GET') {
+    try {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`);
+      const data = await resp.json();
+      return res.status(resp.status).json(data);
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed. Please use POST.' });
   }
 
   try {
