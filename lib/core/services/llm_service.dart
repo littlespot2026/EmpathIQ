@@ -18,26 +18,37 @@ class LLMService {
     required String relationship,
     required AppSettings settings,
   }) async {
-    // If user has provided an API key (custom or env) and mock is disabled
-    final effectiveKey = settings.effectiveApiKey;
-    if (effectiveKey.isNotEmpty && !settings.enableMockSimulation) {
+    // If mock simulation is not explicitly forced
+    if (!settings.enableMockSimulation) {
       try {
-        final effectiveSettings = settings.copyWith(apiKey: effectiveKey);
-        if (settings.provider == 'gemini') {
+        if (settings.hasCustomApiKey) {
+          // User manually entered personal key in Settings
+          if (settings.provider == 'gemini') {
+            return await _callGeminiDecoder(
+              inputText: inputText,
+              relationship: relationship,
+              settings: settings,
+              useProxy: false,
+            );
+          } else {
+            return await _callOpenAIDecoder(
+              inputText: inputText,
+              relationship: relationship,
+              settings: settings,
+            );
+          }
+        } else {
+          // Secure Vercel Serverless proxy (/api/gemini)
+          // Frontend contains zero API keys
           return await _callGeminiDecoder(
             inputText: inputText,
             relationship: relationship,
-            settings: effectiveSettings,
-          );
-        } else {
-          return await _callOpenAIDecoder(
-            inputText: inputText,
-            relationship: relationship,
-            settings: effectiveSettings,
+            settings: settings,
+            useProxy: true,
           );
         }
       } catch (e) {
-        debugPrint('[EmpathIQ LLM] Live API failed, falling back to smart engine: $e');
+        debugPrint('[EmpathIQ LLM] Live API / Serverless proxy failed, falling back to smart engine: $e');
         // Fall back gracefully
       }
     }
@@ -47,16 +58,23 @@ class LLMService {
     return _generateContextualMockResult(inputText, relationship);
   }
 
-  /// Call Google Gemini API
+  /// Call Google Gemini API (directly or through Vercel Serverless proxy)
   Future<DecodeResult> _callGeminiDecoder({
     required String inputText,
     required String relationship,
     required AppSettings settings,
+    bool useProxy = false,
   }) async {
     final langName = AppLocale.instance.currentLanguage.name;
     final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-1.5-flash';
-    final url = Uri.parse(
-        '${settings.baseUrl}/v1beta/models/$model:generateContent?key=${settings.apiKey.trim()}');
+
+    final Uri url;
+    if (useProxy) {
+      url = Uri.base.resolve('/api/gemini');
+    } else {
+      url = Uri.parse(
+          '${settings.baseUrl}/v1beta/models/$model:generateContent?key=${settings.apiKey.trim()}');
+    }
 
     final prompt = '''
 ${PromptConstants.systemPrompt}
@@ -72,6 +90,7 @@ Output pure JSON conforming strictly to the schema.
 ''';
 
     final body = jsonEncode({
+      'model': model,
       'contents': [
         {
           'parts': [
@@ -164,9 +183,8 @@ Output pure JSON conforming strictly to the schema.
     required int currentDefense,
     required AppSettings settings,
   }) async {
-    // If real API configured (custom or env key)
-    final effectiveKey = settings.effectiveApiKey;
-    if (effectiveKey.isNotEmpty && !settings.enableMockSimulation) {
+    // If real API / proxy enabled
+    if (!settings.enableMockSimulation) {
       try {
         final langName = AppLocale.instance.currentLanguage.name;
         final prompt = '''
@@ -186,15 +204,21 @@ User Reply: "$userReply"
 
 Calculate defense_delta, provide psychological review tag, inner monologue, next NPC response, and coaching hint in $langName. Output strict pure JSON.
 ''';
-        if (settings.provider == 'gemini') {
-          final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-1.5-flash';
-          final url = Uri.parse(
-              '${settings.baseUrl}/v1beta/models/$model:generateContent?key=$effectiveKey');
-          final resp = await http.post(
-            url,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'contents': [
+        final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-1.5-flash';
+        final Uri url;
+        if (settings.hasCustomApiKey) {
+          url = Uri.parse(
+              '${settings.baseUrl}/v1beta/models/$model:generateContent?key=${settings.apiKey.trim()}');
+        } else {
+          url = Uri.base.resolve('/api/gemini');
+        }
+
+        final resp = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'model': model,
+            'contents': [
                 {
                   'parts': [
                     {'text': prompt}
@@ -209,7 +233,6 @@ Calculate defense_delta, provide psychological review tag, inner monologue, next
             final txt = data['candidates'][0]['content']['parts'][0]['text'] as String;
             return _extractCleanJson(txt);
           }
-        }
       } catch (e) {
         debugPrint('[Sandbox LLM] Fallback to simulator: $e');
       }
@@ -455,6 +478,7 @@ Calculate defense_delta, provide psychological review tag, inner monologue, next
           (isZh ? '他要是真不管我，今天就彻底完了。' : 'If they really walk away now, we are completely done.'),
       initialNpcSpeech: json['initial_npc_speech'] as String? ??
           (isZh ? '不用管我，反正我怎么想的一点都不重要。' : 'Don\'t bother with me. What I think doesn\'t matter anyway.'),
+      isMock: false,
     );
   }
 
@@ -660,6 +684,7 @@ Calculate defense_delta, provide psychological review tag, inner monologue, next
       strategies: strategies,
       initialNpcThought: thought,
       initialNpcSpeech: speech,
+      isMock: true,
     );
   }
 
@@ -803,6 +828,7 @@ Calculate defense_delta, provide psychological review tag, inner monologue, next
       strategies: strategies,
       initialNpcThought: thought,
       initialNpcSpeech: speech,
+      isMock: true,
     );
   }
 }

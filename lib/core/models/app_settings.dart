@@ -5,34 +5,22 @@ class AppSettings {
   final String modelName;
   final bool enableMockSimulation;
 
-  static const String envGeminiApiKey =
-      String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
-  static const String envGeminiModel =
-      String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-1.5-flash');
-  static const String envGeminiBaseUrl =
-      String.fromEnvironment('GEMINI_BASE_URL', defaultValue: 'https://generativelanguage.googleapis.com');
-
   const AppSettings({
-    this.apiKey = envGeminiApiKey,
+    this.apiKey = '',
     this.provider = 'gemini',
-    this.baseUrl = envGeminiBaseUrl,
-    this.modelName = envGeminiModel,
-    this.enableMockSimulation = envGeminiApiKey == '',
+    this.baseUrl = 'https://generativelanguage.googleapis.com',
+    this.modelName = 'gemini-1.5-flash',
+    this.enableMockSimulation = false,
   });
 
-  /// Unified API Key reading priority:
-  /// Priority 1: User's custom API Key from Settings UI (stored in local SharedPreferences)
-  /// Priority 2: Compile-time injected --dart-define=GEMINI_API_KEY
-  /// Priority 3: Empty string (gracefully falls back to mock simulation engine)
-  String get effectiveApiKey {
-    if (apiKey.trim().isNotEmpty) {
-      return apiKey.trim();
-    }
-    return envGeminiApiKey.trim();
-  }
+  /// True if user explicitly entered a personal key in Settings UI
+  bool get hasCustomApiKey => apiKey.trim().isNotEmpty;
 
-  /// True if either custom or compile-time Gemini API key is available
-  bool get isRealAiAvailable => effectiveApiKey.isNotEmpty;
+  /// In the secure serverless architecture:
+  /// - Real AI is available via Vercel /api/gemini backend proxy by default
+  /// - Or via custom direct key if provided
+  /// - Available unless user explicitly turns ON mock simulation
+  bool get isRealAiAvailable => !enableMockSimulation;
 
   AppSettings copyWith({
     String? apiKey,
@@ -61,17 +49,12 @@ class AppSettings {
   }
 
   factory AppSettings.fromMap(Map<String, dynamic> map) {
-    final storedKey = map['api_key'] as String? ?? '';
-    final effectiveKey = storedKey.isNotEmpty ? storedKey : envGeminiApiKey;
-    final bool hasEnvKeyOnly = storedKey.isEmpty && envGeminiApiKey.isNotEmpty;
     return AppSettings(
-      apiKey: effectiveKey,
+      apiKey: map['api_key'] as String? ?? '',
       provider: map['provider'] as String? ?? 'gemini',
-      baseUrl: map['base_url'] as String? ?? envGeminiBaseUrl,
-      modelName: map['model_name'] as String? ?? envGeminiModel,
-      enableMockSimulation: hasEnvKeyOnly
-          ? false
-          : (map['enable_mock_simulation'] as bool? ?? effectiveKey.isEmpty),
+      baseUrl: map['base_url'] as String? ?? 'https://generativelanguage.googleapis.com',
+      modelName: map['model_name'] as String? ?? 'gemini-1.5-flash',
+      enableMockSimulation: map['enable_mock_simulation'] as bool? ?? false,
     );
   }
 }

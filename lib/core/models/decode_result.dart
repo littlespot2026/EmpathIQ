@@ -46,6 +46,7 @@ class DecodeResult {
   final List<DecodeStrategy> strategies;
   final String initialNpcThought; // 沙盒初始角色内心活动
   final String initialNpcSpeech; // 沙盒初始角色对白
+  final bool isMock;
 
   const DecodeResult({
     required this.id,
@@ -61,6 +62,7 @@ class DecodeResult {
     required this.strategies,
     this.initialNpcThought = '',
     this.initialNpcSpeech = '',
+    this.isMock = false,
   });
 
   DecodeStrategy? get empathyStrategy {
@@ -102,6 +104,7 @@ class DecodeResult {
       'strategies': strategies.map((s) => s.toMap()).toList(),
       'initial_npc_thought': initialNpcThought,
       'initial_npc_speech': initialNpcSpeech,
+      'is_mock': isMock,
     };
   }
 
@@ -125,6 +128,7 @@ class DecodeResult {
           [],
       initialNpcThought: map['initial_npc_thought'] as String? ?? '',
       initialNpcSpeech: map['initial_npc_speech'] as String? ?? '',
+      isMock: map['is_mock'] as bool? ?? false,
     );
   }
 

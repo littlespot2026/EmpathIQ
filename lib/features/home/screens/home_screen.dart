@@ -169,8 +169,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _historyList = storage.getHistory();
         });
 
-        // If running in simulation/mock mode because no API key is present
-        if (!_settings.isRealAiAvailable || _settings.enableMockSimulation) {
+        // If running in simulation/mock mode (either mock toggle is ON or offline fallback)
+        if (result.isMock) {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
