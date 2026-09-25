@@ -29,7 +29,27 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        return res.status(400).json({ error: 'Malformed JSON request body: ' + e.message });
+      }
+    } else if (!body && req.readable) {
+      const buffers = [];
+      for await (const chunk of req) {
+        buffers.push(chunk);
+      }
+      const raw = Buffer.concat(buffers).toString('utf8');
+      try {
+        body = JSON.parse(raw);
+      } catch (e) {
+        return res.status(400).json({ error: 'Malformed JSON stream: ' + e.message });
+      }
+    }
+    body = body || {};
+
     const model = body.model || 'gemini-1.5-flash';
     const contents = body.contents;
     const prompt = body.prompt;
@@ -64,7 +84,13 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify(payload)
     });
 
-    const responseData = await upstreamResponse.json();
+    const responseText = await upstreamResponse.text();
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (_) {
+      responseData = { rawResponse: responseText };
+    }
 
     if (!upstreamResponse.ok) {
       console.error('[Gemini Proxy] Upstream API error:', upstreamResponse.status, responseData);
@@ -76,7 +102,8 @@ module.exports = async function handler(req, res) {
     console.error('[Gemini Proxy] Uncaught handler error:', error);
     return res.status(500).json({
       error: 'Internal server error in Gemini proxy',
-      message: error.message
+      message: error.message,
+      stack: error.stack
     });
   }
 };
