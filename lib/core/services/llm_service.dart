@@ -17,6 +17,8 @@ class LLMService {
     required String inputText,
     required String relationship,
     required AppSettings settings,
+    Uint8List? imageBytes,
+    String? mimeType,
   }) async {
     // If mock simulation is not explicitly forced
     if (!settings.enableMockSimulation) {
@@ -29,12 +31,16 @@ class LLMService {
               relationship: relationship,
               settings: settings,
               useProxy: false,
+              imageBytes: imageBytes,
+              mimeType: mimeType,
             );
           } else {
             return await _callOpenAIDecoder(
               inputText: inputText,
               relationship: relationship,
               settings: settings,
+              imageBytes: imageBytes,
+              mimeType: mimeType,
             );
           }
         } else {
@@ -45,6 +51,8 @@ class LLMService {
             relationship: relationship,
             settings: settings,
             useProxy: true,
+            imageBytes: imageBytes,
+            mimeType: mimeType,
           );
         }
       } catch (e) {
@@ -64,6 +72,8 @@ class LLMService {
     required String relationship,
     required AppSettings settings,
     bool useProxy = false,
+    Uint8List? imageBytes,
+    String? mimeType,
   }) async {
     final langName = AppLocale.instance.currentLanguage.name;
     final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-3.5-flash';
@@ -76,7 +86,24 @@ class LLMService {
           '${settings.baseUrl}/v1beta/models/$model:generateContent?key=${settings.apiKey.trim()}');
     }
 
-    final prompt = '''
+    final String prompt;
+    if (imageBytes != null) {
+      prompt = '''
+${PromptConstants.systemPrompt}
+
+${PromptConstants.visionGuidance}
+
+Language Instruction:
+Please output all JSON text content (surface_meaning, real_subtext, core_pain_point, strategy titles, action_text, mechanism, initial_npc_thought, initial_npc_speech) natively and fluently in: $langName.
+
+【Input Context】：
+- Relationship Context: $relationship
+${inputText.trim().isNotEmpty ? '- User Context Note: "$inputText"' : '- Note: Please analyze the conversation in the uploaded chat screenshot.'}
+
+Output pure JSON conforming strictly to the schema.
+''';
+    } else {
+      prompt = '''
 ${PromptConstants.systemPrompt}
 
 Language Instruction:
@@ -88,27 +115,47 @@ Please output all JSON text content (surface_meaning, real_subtext, core_pain_po
 
 Output pure JSON conforming strictly to the schema.
 ''';
+    }
 
-    final body = jsonEncode({
+    final imageBase64 = imageBytes != null ? base64Encode(imageBytes) : null;
+    final imageMime = mimeType ?? 'image/jpeg';
+
+    final List<Map<String, dynamic>> parts = [];
+    if (imageBase64 != null) {
+      parts.add({
+        'inlineData': {
+          'mimeType': imageMime,
+          'data': imageBase64,
+        }
+      });
+    }
+    parts.add({'text': prompt});
+
+    final bodyMap = <String, dynamic>{
       'model': model,
       'contents': [
-        {
-          'parts': [
-            {'text': prompt}
-          ]
-        }
+        {'parts': parts}
       ],
       'generationConfig': {
         'responseMimeType': 'application/json',
         'temperature': 0.7,
-      }
-    });
+      },
+    };
+
+    if (imageBase64 != null) {
+      bodyMap['image'] = {
+        'mimeType': imageMime,
+        'base64Data': imageBase64,
+      };
+    }
+
+    final body = jsonEncode(bodyMap);
 
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: body,
-    ).timeout(const Duration(seconds: 25));
+    ).timeout(const Duration(seconds: 35));
 
     if (response.statusCode != 200) {
       throw Exception('Gemini API Error (${response.statusCode}): ${response.body}');
@@ -130,21 +177,42 @@ Output pure JSON conforming strictly to the schema.
     required String inputText,
     required String relationship,
     required AppSettings settings,
+    Uint8List? imageBytes,
+    String? mimeType,
   }) async {
     final langName = AppLocale.instance.currentLanguage.name;
     final baseUrl = settings.baseUrl.trim().replaceAll(RegExp(r'/+$'), '');
     final url = Uri.parse('$baseUrl/chat/completions');
 
+    final dynamic userContent;
+    if (imageBytes != null) {
+      final imageBase64 = base64Encode(imageBytes);
+      final imageMime = mimeType ?? 'image/jpeg';
+      userContent = [
+        {
+          'type': 'image_url',
+          'image_url': {'url': 'data:$imageMime;base64,$imageBase64'}
+        },
+        {
+          'type': 'text',
+          'text':
+              'Relationship context: $relationship\n${inputText.trim().isNotEmpty ? 'Context note: "$inputText"\n' : ''}Analyze this chat screenshot in-depth and provide 3 breakthrough strategies in $langName, formatted as JSON.'
+        }
+      ];
+    } else {
+      userContent =
+          'Relationship context: $relationship\nSpeaker said: "$inputText"\nProvide in-depth subtext analysis and 3 breakthrough strategies in $langName, formatted as JSON.';
+    }
+
     final messages = [
       {
         'role': 'system',
         'content':
-            '${PromptConstants.systemPrompt}\n\nIMPORTANT: Output all field values (real_subtext, core_pain_point, strategies, action_text, mechanism, npc lines) in: $langName.'
+            '${PromptConstants.systemPrompt}\n${imageBytes != null ? PromptConstants.visionGuidance : ''}\n\nIMPORTANT: Output all field values (real_subtext, core_pain_point, strategies, action_text, mechanism, npc lines) in: $langName.'
       },
       {
         'role': 'user',
-        'content':
-            'Relationship context: $relationship\nSpeaker said: "$inputText"\nProvide in-depth subtext analysis and 3 breakthrough strategies in $langName, formatted as JSON.'
+        'content': userContent,
       }
     ];
 
@@ -162,7 +230,7 @@ Output pure JSON conforming strictly to the schema.
         'Authorization': 'Bearer ${settings.apiKey.trim()}',
       },
       body: body,
-    ).timeout(const Duration(seconds: 25));
+    ).timeout(const Duration(seconds: 35));
 
     if (response.statusCode != 200) {
       throw Exception('OpenAI API Error (${response.statusCode}): ${response.body}');
@@ -402,7 +470,7 @@ Calculate defense_delta, provide psychological review tag, inner monologue, next
     final level = json['temperature_level'] as String? ??
         (temp <= 30 ? '冷淡蓝' : temp <= 70 ? '焦躁黄' : '易燃红');
     final defense = (json['defense_percent'] as num?)?.toInt() ?? 70;
-    final surface = json['surface_meaning'] as String? ?? input;
+    final surface = json['surface_meaning'] as String? ?? (input.trim().isNotEmpty ? input : tr('screenshot_attached'));
     final subtext = json['real_subtext'] as String? ?? '渴望被理解与关注，但出于防御心理使用了反向言语包装。';
     final pain = json['core_pain_point'] as String? ?? '担心自己的需求不被重视，缺乏心理安全感。';
 
@@ -484,10 +552,11 @@ Calculate defense_delta, provide psychological review tag, inner monologue, next
 
   /// Context-aware smart mock data generation
   DecodeResult _generateContextualMockResult(String input, String rel) {
+    final effectiveInput = input.trim().isNotEmpty ? input.trim() : tr('screenshot_attached');
     if (AppLocale.instance.currentCode == 'zh') {
-      return _generateChineseMockResult(input, rel);
+      return _generateChineseMockResult(effectiveInput, rel);
     }
-    return _generateEnglishMockResult(input, rel);
+    return _generateEnglishMockResult(effectiveInput, rel);
   }
 
   DecodeResult _generateEnglishMockResult(String input, String rel) {

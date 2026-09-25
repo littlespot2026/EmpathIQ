@@ -26,6 +26,15 @@ class PromptConstants {
 必须严格输出纯 JSON 格式，绝不允许带有任何 Markdown 标记或多余解释文字，字段必须完全符合约定。
 ''';
 
+  static const String visionGuidance = '''
+【多模态聊天截图深度识别指南 (Chat Screenshot Multimodal Guidance)】：
+用户上传了真实的聊天记录截图。请按以下视觉认知逻辑解析：
+1. 视觉时序与对话归属：从上到下按时间先后阅读对话气泡，区分左右气泡（右侧通常为用户，左侧为对话对方/NPC）。
+2. 定位情绪爆发/矛盾转折点：提取整段对话中情绪张力最强、被动攻击、冷淡回避或引发对抗的一句关键发话，作为 surface_meaning。
+3. 心理潜台词透视：结合上下文真实意图，穿透该核心发话背后的 real_subtext、核心痛点 core_pain_point 与防御厚度 defense_percent。
+4. 破局三策：针对该截图的真实对话语境，输出三套具体的应对策略与实战台词。
+''';
+
   static const String jsonSchemaExample = '''
 {
   "temperature": 78,

@@ -209,4 +209,27 @@ void main() {
     // Let the 2-second copy checkmark timer expire cleanly
     await tester.pump(const Duration(seconds: 3));
   });
+
+  testWidgets('Chat screenshot OCR button renders and adapts across languages', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await AppLocale.instance.init();
+    await AppLocale.instance.setLanguage('en');
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: HomeScreen(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify upload screenshot button is visible in English
+    expect(find.text('Upload Chat Screenshot'), findsOneWidget);
+    expect(find.byIcon(Icons.add_photo_alternate_rounded), findsOneWidget);
+
+    // Switch to Chinese and verify instant copy update
+    await AppLocale.instance.setLanguage('zh');
+    await tester.pumpAndSettle();
+
+    expect(find.text('📷 上传聊天长截图'), findsOneWidget);
+    expect(find.text('Upload Chat Screenshot'), findsNothing);
+  });
 }

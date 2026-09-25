@@ -69,25 +69,46 @@ module.exports = async function handler(req, res) {
 
     const contents = body.contents;
     const prompt = body.prompt;
+    const image = body.image;
     const generationConfig = body.generationConfig || {
       responseMimeType: 'application/json',
       temperature: 0.7
     };
 
     let payload;
-    if (contents) {
+    if (contents && Array.isArray(contents)) {
+      if (image && (image.base64Data || image.data) && contents[0] && contents[0].parts) {
+        contents[0].parts.unshift({
+          inlineData: {
+            mimeType: image.mimeType || 'image/jpeg',
+            data: image.base64Data || image.data
+          }
+        });
+      }
       payload = { contents, generationConfig };
-    } else if (prompt) {
+    } else if (prompt || (image && (image.base64Data || image.data))) {
+      const parts = [];
+      if (image && (image.base64Data || image.data)) {
+        parts.push({
+          inlineData: {
+            mimeType: image.mimeType || 'image/jpeg',
+            data: image.base64Data || image.data
+          }
+        });
+      }
+      if (prompt) {
+        parts.push({ text: prompt });
+      }
       payload = {
         contents: [
           {
-            parts: [{ text: prompt }]
+            parts
           }
         ],
         generationConfig
       };
     } else {
-      return res.status(400).json({ error: 'Request body must contain "contents" or "prompt".' });
+      return res.status(400).json({ error: 'Request body must contain "contents", "prompt", or "image".' });
     }
 
     async function callUpstream(modelName) {

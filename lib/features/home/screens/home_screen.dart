@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/localization/app_locale.dart';
 import '../../../core/models/app_settings.dart';
 import '../../../core/models/decode_result.dart';
@@ -36,6 +38,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _hasPromptedClipboard = false;
   AppSettings _settings = const AppSettings();
 
+  // Multimodal Vision / Chat Screenshot State
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageName;
+  int? _selectedImageSize;
+  int _loadingStage = 0;
+  Timer? _loadingTimer;
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _loadingTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     AppLocale.instance.removeListener(_onLocaleChanged);
     StorageService.proStatusNotifier.removeListener(_refreshStorageData);
@@ -94,6 +104,155 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _historyList = storage.getHistory();
       _settings = storage.getSettings();
     });
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2048,
+        maxHeight: 4096,
+        imageQuality: 85,
+      );
+      if (image == null) return;
+
+      final bytes = await image.readAsBytes();
+      if (bytes.lengthInBytes > 4 * 1024 * 1024) {
+        final sizeMb = (bytes.lengthInBytes / (1024 * 1024)).toStringAsFixed(1);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(tr('image_too_large', ['${sizeMb}MB'])),
+              backgroundColor: AppColors.flammableRedSubtle,
+            ),
+          );
+        }
+        return;
+      }
+
+      setState(() {
+        _selectedImageBytes = bytes;
+        _selectedImageName = image.name;
+        _selectedImageSize = bytes.lengthInBytes;
+      });
+    } catch (e) {
+      debugPrint('[HomeScreen] Failed to pick image: $e');
+    }
+  }
+
+  void _clearSelectedImage() {
+    setState(() {
+      _selectedImageBytes = null;
+      _selectedImageName = null;
+      _selectedImageSize = null;
+    });
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  String _detectMimeType(String? name) {
+    if (name == null) return 'image/jpeg';
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
+    return 'image/jpeg';
+  }
+
+  String _getLoadingText() {
+    if (_selectedImageBytes != null) {
+      switch (_loadingStage) {
+        case 0:
+          return tr('analyzing_vision_step_1');
+        case 1:
+          return tr('analyzing_vision_step_2');
+        case 2:
+        default:
+          return tr('analyzing_vision_step_3');
+      }
+    }
+    return tr('analyzing');
+  }
+
+  Widget _buildImagePreview() {
+    if (_selectedImageBytes == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceElevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.warmBeige.withValues(alpha: 0.35),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.memory(
+              _selectedImageBytes!,
+              width: 46,
+              height: 46,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.image_rounded, size: 14, color: AppColors.warmBeige),
+                    const SizedBox(width: 5),
+                    Text(
+                      tr('screenshot_attached'),
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${_selectedImageName ?? "screenshot.jpg"} (${_formatFileSize(_selectedImageSize ?? 0)})',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: _isLoading ? null : _clearSelectedImage,
+            icon: const Icon(Icons.close_rounded, size: 16),
+            color: AppColors.textMuted,
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.surfaceHighlight.withValues(alpha: 0.6),
+              padding: const EdgeInsets.all(6),
+              minimumSize: const Size(28, 28),
+            ),
+            tooltip: tr('remove_screenshot'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _checkClipboard() async {
@@ -139,7 +298,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _handleDecode() async {
     final text = _inputController.text.trim();
-    if (text.isEmpty || _isLoading) return;
+    final hasImage = _selectedImageBytes != null;
+    if ((text.isEmpty && !hasImage) || _isLoading) return;
 
     if (_remainingQuota <= 0) {
       _showQuotaExceededDialog();
@@ -148,7 +308,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     setState(() {
       _isLoading = true;
+      _loadingStage = 0;
     });
+
+    if (hasImage) {
+      _loadingTimer?.cancel();
+      _loadingTimer = Timer.periodic(const Duration(milliseconds: 1400), (t) {
+        if (mounted && _isLoading) {
+          setState(() {
+            _loadingStage = (_loadingStage + 1) % 3;
+          });
+        } else {
+          t.cancel();
+        }
+      });
+    }
 
     try {
       final storage = await StorageService.getInstance();
@@ -158,6 +332,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         inputText: text,
         relationship: tr(_selectedRelationshipKey),
         settings: _settings,
+        imageBytes: _selectedImageBytes,
+        mimeType: _detectMimeType(_selectedImageName),
       );
 
       await storage.saveDecodeResult(result);
@@ -168,6 +344,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _remainingQuota = storage.getRemainingDailyQuota();
           _historyList = storage.getHistory();
         });
+
+        _inputController.clear();
+        _clearSelectedImage();
 
         // If running in simulation/mock mode (either mock toggle is ON or offline fallback)
         if (result.isMock) {
@@ -218,6 +397,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         );
       }
+    } finally {
+      _loadingTimer?.cancel();
     }
   }
 
@@ -315,7 +496,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final textLength = _inputController.text.length;
-    final isInputValid = textLength > 0 && textLength <= 300;
+    final hasImage = _selectedImageBytes != null;
+    final isInputValid = (textLength > 0 && textLength <= 300) || hasImage;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -526,7 +708,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
+                               Row(
                                 children: [
                                   const Icon(Icons.radar_rounded, size: 16, color: AppColors.amberSand),
                                   const SizedBox(width: 6),
@@ -543,6 +725,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               ),
                               const SizedBox(height: 12),
 
+                              // Thumbnail Preview Bar (if image attached)
+                              _buildImagePreview(),
+
                               // Text Area
                               TextField(
                                 controller: _inputController,
@@ -552,18 +737,73 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 onChanged: (_) => setState(() {}),
                                 style: const TextStyle(fontSize: 14, height: 1.4, color: AppColors.textPrimary),
                                 decoration: InputDecoration(
-                                  hintText: tr('decoder_hint'),
+                                  hintText: hasImage ? tr('decoder_hint_with_image') : tr('decoder_hint'),
                                   filled: true,
                                   fillColor: AppColors.surfaceElevated,
-                                  counterText: tr('char_counter', [textLength.toString()]),
-                                  counterStyle: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
+                                  counterText: '',
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
                                     borderSide: const BorderSide(color: AppColors.borderSubtle),
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
+
+                              // Card action bar: Upload screenshot button + char counter
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: InkWell(
+                                      onTap: _isLoading ? null : _pickImage,
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: hasImage
+                                              ? AppColors.warmBeige.withValues(alpha: 0.15)
+                                              : AppColors.surfaceElevated,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: hasImage
+                                                ? AppColors.warmBeige
+                                                : AppColors.borderSubtle,
+                                            width: 0.8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.add_photo_alternate_rounded,
+                                              size: 15,
+                                              color: hasImage ? AppColors.warmBeige : AppColors.textSecondary,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Flexible(
+                                              child: Text(
+                                                hasImage ? tr('screenshot_attached') : tr('btn_upload_screenshot'),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: hasImage ? AppColors.warmBeige : AppColors.textSecondary,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    tr('char_counter', [textLength.toString()]),
+                                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
 
                               // Relationship chips
                               Text(
@@ -609,11 +849,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                                 ),
                                               ),
                                               const SizedBox(width: 10),
-                                              Text(
-                                                tr('analyzing'),
-                                                style: const TextStyle(
-                                                  fontSize: 13.5,
-                                                  fontWeight: FontWeight.w700,
+                                              Flexible(
+                                                child: AnimatedSwitcher(
+                                                  duration: const Duration(milliseconds: 250),
+                                                  child: Text(
+                                                    _getLoadingText(),
+                                                    key: ValueKey<String>(_getLoadingText()),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
                                             ],
