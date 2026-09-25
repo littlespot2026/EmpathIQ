@@ -30,7 +30,23 @@ class _StrategyCardState extends State<StrategyCard>
   @override
   void initState() {
     super.initState();
+    _isUserPro = StorageService.proStatusNotifier.value;
+    StorageService.proStatusNotifier.addListener(_onProStatusChanged);
     _checkProStatus();
+  }
+
+  @override
+  void dispose() {
+    StorageService.proStatusNotifier.removeListener(_onProStatusChanged);
+    super.dispose();
+  }
+
+  void _onProStatusChanged() {
+    if (mounted) {
+      setState(() {
+        _isUserPro = StorageService.proStatusNotifier.value;
+      });
+    }
   }
 
   Future<void> _checkProStatus() async {
@@ -98,18 +114,35 @@ class _StrategyCardState extends State<StrategyCard>
       return;
     }
 
-    HapticFeedback.lightImpact();
+    HapticFeedback.mediumImpact();
     Clipboard.setData(ClipboardData(text: widget.strategy.actionText));
     setState(() {
       _isCopied = true;
     });
 
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(tr('copied_feedback', [widget.strategy.title])),
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: AppColors.empathyGreen, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                tr('copy_success_toast'),
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
         duration: const Duration(seconds: 2),
         backgroundColor: AppColors.surfaceHighlight,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
 
@@ -124,7 +157,7 @@ class _StrategyCardState extends State<StrategyCard>
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final cardContent = Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -224,13 +257,13 @@ class _StrategyCardState extends State<StrategyCard>
                       color: _isLocked
                           ? AppColors.warmBeige.withValues(alpha: 0.15)
                           : (_isCopied
-                              ? _accentColor.withValues(alpha: 0.2)
+                              ? AppColors.empathyGreen.withValues(alpha: 0.18)
                               : AppColors.surfaceElevated),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: _isLocked
                             ? AppColors.warmBeige.withValues(alpha: 0.4)
-                            : (_isCopied ? _accentColor : AppColors.borderLight),
+                            : (_isCopied ? AppColors.empathyGreen : AppColors.borderLight),
                         width: 0.8,
                       ),
                     ),
@@ -250,12 +283,12 @@ class _StrategyCardState extends State<StrategyCard>
                           ),
                         ] else ...[
                           AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
+                            duration: const Duration(milliseconds: 250),
                             child: Icon(
                               _isCopied ? Icons.check_circle_rounded : Icons.copy_rounded,
                               key: ValueKey<bool>(_isCopied),
                               size: 13,
-                              color: _isCopied ? _accentColor : AppColors.textSecondary,
+                              color: _isCopied ? AppColors.empathyGreen : AppColors.textSecondary,
                             ),
                           ),
                           const SizedBox(width: 5),
@@ -264,7 +297,7 @@ class _StrategyCardState extends State<StrategyCard>
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
-                              color: _isCopied ? _accentColor : AppColors.textSecondary,
+                              color: _isCopied ? AppColors.empathyGreen : AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -498,5 +531,17 @@ class _StrategyCardState extends State<StrategyCard>
         ],
       ),
     );
+
+    if (_isLocked) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          ProPaywallModal.show(context, onSubscribed: _checkProStatus);
+        },
+        child: cardContent,
+      );
+    }
+
+    return cardContent;
   }
 }

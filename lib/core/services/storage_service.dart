@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_settings.dart';
@@ -7,6 +8,7 @@ import '../models/decode_result.dart';
 class StorageService {
   static StorageService? _instance;
   static SharedPreferences? _prefs;
+  static final ValueNotifier<bool> proStatusNotifier = ValueNotifier<bool>(false);
 
   StorageService._();
 
@@ -14,6 +16,7 @@ class StorageService {
     if (_instance == null) {
       _instance = StorageService._();
       _prefs = await SharedPreferences.getInstance();
+      proStatusNotifier.value = _prefs?.getBool(_keyUserIsPro) ?? false;
     }
     return _instance!;
   }
@@ -53,6 +56,11 @@ class StorageService {
     } else if (!isPro) {
       await _prefs?.remove(_keyProPlan);
     }
+    proStatusNotifier.value = isPro;
+  }
+
+  Future<void> resetUserPro() async {
+    await setUserPro(false);
   }
 
   Future<void> addEmergencyScans(int count) async {

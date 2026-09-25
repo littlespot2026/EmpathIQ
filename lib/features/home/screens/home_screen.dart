@@ -41,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     AppLocale.instance.addListener(_onLocaleChanged);
+    StorageService.proStatusNotifier.addListener(_refreshStorageData);
     _loadInitialData();
     _checkClipboard();
 
@@ -55,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     AppLocale.instance.removeListener(_onLocaleChanged);
+    StorageService.proStatusNotifier.removeListener(_refreshStorageData);
     _inputController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -166,6 +168,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           _remainingQuota = storage.getRemainingDailyQuota();
           _historyList = storage.getHistory();
         });
+
+        // If running in simulation/mock mode because no API key is present
+        if (!_settings.isRealAiAvailable || _settings.enableMockSimulation) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, color: AppColors.warmBeige, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      tr('mock_mode_notice'),
+                      style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: AppColors.surfaceHighlight,
+              duration: const Duration(seconds: 4),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              action: SnackBarAction(
+                label: tr('go_to_settings').split(' ').first,
+                textColor: AppColors.warmBeige,
+                onPressed: _openSettings,
+              ),
+            ),
+          );
+        }
 
         // Navigate to Decoder Results Page
         Navigator.of(context).push(

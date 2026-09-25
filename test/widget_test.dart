@@ -193,5 +193,20 @@ void main() {
     // Storage is now Pro
     final storage = await StorageService.getInstance();
     expect(storage.isUserPro(), isTrue);
+    expect(StorageService.proStatusNotifier.value, isTrue);
+
+    // Modal dismissed, verify Strategy B unblurs and reveals its text reactively!
+    await tester.pumpAndSettle();
+    expect(find.text('Did we secretly agree on that?'), findsOneWidget);
+
+    // Tap copy button on Strategy A and verify feedback toast
+    final copyBtn = find.text('Copy').first;
+    await tester.tap(copyBtn);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Tactical response copied! Go ahead and send it.'), findsOneWidget);
+
+    // Let the 2-second copy checkmark timer expire cleanly
+    await tester.pump(const Duration(seconds: 3));
   });
 }

@@ -18,20 +18,22 @@ class LLMService {
     required String relationship,
     required AppSettings settings,
   }) async {
-    // If user has provided an API key and mock is disabled or key present
-    if (settings.apiKey.trim().isNotEmpty && !settings.enableMockSimulation) {
+    // If user has provided an API key (custom or env) and mock is disabled
+    final effectiveKey = settings.effectiveApiKey;
+    if (effectiveKey.isNotEmpty && !settings.enableMockSimulation) {
       try {
+        final effectiveSettings = settings.copyWith(apiKey: effectiveKey);
         if (settings.provider == 'gemini') {
           return await _callGeminiDecoder(
             inputText: inputText,
             relationship: relationship,
-            settings: settings,
+            settings: effectiveSettings,
           );
         } else {
           return await _callOpenAIDecoder(
             inputText: inputText,
             relationship: relationship,
-            settings: settings,
+            settings: effectiveSettings,
           );
         }
       } catch (e) {
@@ -162,8 +164,9 @@ Output pure JSON conforming strictly to the schema.
     required int currentDefense,
     required AppSettings settings,
   }) async {
-    // If real API configured
-    if (settings.apiKey.trim().isNotEmpty && !settings.enableMockSimulation) {
+    // If real API configured (custom or env key)
+    final effectiveKey = settings.effectiveApiKey;
+    if (effectiveKey.isNotEmpty && !settings.enableMockSimulation) {
       try {
         final langName = AppLocale.instance.currentLanguage.name;
         final prompt = '''
@@ -186,7 +189,7 @@ Calculate defense_delta, provide psychological review tag, inner monologue, next
         if (settings.provider == 'gemini') {
           final model = settings.modelName.isNotEmpty ? settings.modelName : 'gemini-1.5-flash';
           final url = Uri.parse(
-              '${settings.baseUrl}/v1beta/models/$model:generateContent?key=${settings.apiKey.trim()}');
+              '${settings.baseUrl}/v1beta/models/$model:generateContent?key=$effectiveKey');
           final resp = await http.post(
             url,
             headers: {'Content-Type': 'application/json'},

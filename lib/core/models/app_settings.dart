@@ -20,6 +20,20 @@ class AppSettings {
     this.enableMockSimulation = envGeminiApiKey == '',
   });
 
+  /// Unified API Key reading priority:
+  /// Priority 1: User's custom API Key from Settings UI (stored in local SharedPreferences)
+  /// Priority 2: Compile-time injected --dart-define=GEMINI_API_KEY
+  /// Priority 3: Empty string (gracefully falls back to mock simulation engine)
+  String get effectiveApiKey {
+    if (apiKey.trim().isNotEmpty) {
+      return apiKey.trim();
+    }
+    return envGeminiApiKey.trim();
+  }
+
+  /// True if either custom or compile-time Gemini API key is available
+  bool get isRealAiAvailable => effectiveApiKey.isNotEmpty;
+
   AppSettings copyWith({
     String? apiKey,
     String? provider,
