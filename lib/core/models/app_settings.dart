@@ -5,12 +5,19 @@ class AppSettings {
   final String modelName;
   final bool enableMockSimulation;
 
+  static const String envGeminiApiKey =
+      String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
+  static const String envGeminiModel =
+      String.fromEnvironment('GEMINI_MODEL', defaultValue: 'gemini-1.5-flash');
+  static const String envGeminiBaseUrl =
+      String.fromEnvironment('GEMINI_BASE_URL', defaultValue: 'https://generativelanguage.googleapis.com');
+
   const AppSettings({
-    this.apiKey = '',
+    this.apiKey = envGeminiApiKey,
     this.provider = 'gemini',
-    this.baseUrl = 'https://generativelanguage.googleapis.com',
-    this.modelName = 'gemini-1.5-flash',
-    this.enableMockSimulation = true,
+    this.baseUrl = envGeminiBaseUrl,
+    this.modelName = envGeminiModel,
+    this.enableMockSimulation = envGeminiApiKey == '',
   });
 
   AppSettings copyWith({
@@ -40,12 +47,17 @@ class AppSettings {
   }
 
   factory AppSettings.fromMap(Map<String, dynamic> map) {
+    final storedKey = map['api_key'] as String? ?? '';
+    final effectiveKey = storedKey.isNotEmpty ? storedKey : envGeminiApiKey;
+    final bool hasEnvKeyOnly = storedKey.isEmpty && envGeminiApiKey.isNotEmpty;
     return AppSettings(
-      apiKey: map['api_key'] as String? ?? '',
+      apiKey: effectiveKey,
       provider: map['provider'] as String? ?? 'gemini',
-      baseUrl: map['base_url'] as String? ?? 'https://generativelanguage.googleapis.com',
-      modelName: map['model_name'] as String? ?? 'gemini-1.5-flash',
-      enableMockSimulation: map['enable_mock_simulation'] as bool? ?? true,
+      baseUrl: map['base_url'] as String? ?? envGeminiBaseUrl,
+      modelName: map['model_name'] as String? ?? envGeminiModel,
+      enableMockSimulation: hasEnvKeyOnly
+          ? false
+          : (map['enable_mock_simulation'] as bool? ?? effectiveKey.isEmpty),
     );
   }
 }
