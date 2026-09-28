@@ -47,8 +47,8 @@ class IcebergGauge extends StatelessWidget {
               children: [
                 // Temperature circle badge
                 Container(
-                  width: 58,
-                  height: 58,
+                  width: 62,
+                  height: 62,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -69,6 +69,7 @@ class IcebergGauge extends StatelessWidget {
                   ),
                   child: Center(
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(

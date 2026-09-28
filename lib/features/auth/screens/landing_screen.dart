@@ -5,6 +5,7 @@ import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../home/screens/home_screen.dart';
 import '../../home/widgets/language_selector_button.dart';
+import '../../legal/widgets/legal_policy_dialog.dart';
 import '../widgets/fluid_background_painter.dart';
 import '../widgets/fluid_opening_overlay.dart';
 
@@ -857,6 +858,54 @@ class _LandingScreenState extends State<LandingScreen>
                                         ),
                                       ),
                                     ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+
+                                // Legal & Privacy Compliance Footer
+                                Center(
+                                  child: Wrap(
+                                    alignment: WrapAlignment.center,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    spacing: 10,
+                                    runSpacing: 4,
+                                    children: [
+                                      InkWell(
+                                        onTap: () => LegalPolicyDialog.show(context, initialTab: 'privacy'),
+                                        child: Text(
+                                          tr('privacy_policy_title'),
+                                          style: const TextStyle(
+                                            fontSize: 10.5,
+                                            color: AppColors.textMuted,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                      const Text('•', style: TextStyle(fontSize: 10, color: AppColors.borderLight)),
+                                      InkWell(
+                                        onTap: () => LegalPolicyDialog.show(context, initialTab: 'disclaimer'),
+                                        child: Text(
+                                          tr('disclaimer_title'),
+                                          style: const TextStyle(
+                                            fontSize: 10.5,
+                                            color: AppColors.textMuted,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                      const Text('•', style: TextStyle(fontSize: 10, color: AppColors.borderLight)),
+                                      InkWell(
+                                        onTap: () => LegalPolicyDialog.show(context, initialTab: 'terms'),
+                                        child: Text(
+                                          tr('terms_of_use_title'),
+                                          style: const TextStyle(
+                                            fontSize: 10.5,
+                                            color: AppColors.textMuted,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: 30),

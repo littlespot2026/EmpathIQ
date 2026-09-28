@@ -4,6 +4,7 @@ import '../../../core/models/app_settings.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/screens/landing_screen.dart';
+import '../../legal/widgets/legal_policy_dialog.dart';
 import '../../subscription/widgets/pro_paywall_modal.dart';
 
 class SettingsSheet extends StatefulWidget {
@@ -465,6 +466,53 @@ class _SettingsSheetState extends State<SettingsSheet> {
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Legal & Privacy Compliance Section
+            InkWell(
+              onTap: () => LegalPolicyDialog.show(context),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.borderSubtle),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.shield_outlined, size: 20, color: AppColors.warmBeige),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tr('legal_and_privacy'),
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${tr('privacy_policy_title')} · ${tr('disclaimer_title')} · ${tr('terms_of_use_title')}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textMuted),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 14),

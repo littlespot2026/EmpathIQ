@@ -6,7 +6,10 @@ import 'package:empathiq/core/localization/app_locale.dart';
 import 'package:empathiq/core/models/decode_result.dart';
 import 'package:empathiq/core/services/storage_service.dart';
 import 'package:empathiq/features/decoder/widgets/strategy_card.dart';
+import 'package:empathiq/features/decoder/screens/decoder_result_screen.dart';
 import 'package:empathiq/features/home/screens/home_screen.dart';
+import 'package:empathiq/features/legal/widgets/legal_policy_dialog.dart';
+import 'package:empathiq/features/subscription/widgets/pro_paywall_modal.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -232,4 +235,126 @@ void main() {
     expect(find.text('📷 上传聊天长截图'), findsOneWidget);
     expect(find.text('Upload Chat Screenshot'), findsNothing);
   });
+
+  testWidgets('LegalPolicyDialog displays privacy policy, switches tabs to disclaimer, and shows crisis hotlines', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await AppLocale.instance.init();
+    await AppLocale.instance.setLanguage('en');
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: LegalPolicyDialog(initialTab: 'privacy'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify Legal & Compliance title and Privacy content
+    expect(find.text('Legal & Compliance'), findsOneWidget);
+    expect(find.textContaining('No Cloud Storage Guarantee'), findsOneWidget);
+
+    // Switch to Disclaimer tab
+    final disclaimerTab = find.text('Disclaimer');
+    expect(disclaimerTab, findsOneWidget);
+    await tester.tap(disclaimerTab);
+    await tester.pumpAndSettle();
+
+    // Verify disclaimer content & crisis emergency numbers
+    expect(find.textContaining('Crisis Hotline & Emergency Interventions'), findsOneWidget);
+    expect(find.textContaining('988'), findsAtLeastNWidgets(1));
+
+    // Switch to Terms tab
+    final termsTab = find.text('Terms');
+    expect(termsTab, findsOneWidget);
+    await tester.tap(termsTab);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('End User License Agreement'), findsOneWidget);
+  });
+
+  testWidgets('ProPaywallModal includes standard EULA/Privacy links and auto-renewable footnote', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await AppLocale.instance.init();
+    await AppLocale.instance.setLanguage('en');
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: ProPaywallModal(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify auto-renewal footnote
+    expect(find.textContaining('Recurring billing'), findsOneWidget);
+
+    // Verify compliance links
+    expect(find.text('Terms of Use (EULA)'), findsOneWidget);
+    expect(find.text('Privacy Policy'), findsOneWidget);
+    expect(find.text('Psychological & Legal Disclaimer'), findsOneWidget);
+  });
+
+  testWidgets('DecoderResultScreen renders dynamic simulation engine badge vs live AI badge', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await AppLocale.instance.init();
+    await AppLocale.instance.setLanguage('en');
+
+    final mockResult = DecodeResult(
+      id: 'mock-test-1',
+      createdAt: DateTime.now(),
+      inputText: 'Test input',
+      relationship: 'Friend',
+      temperature: 75,
+      temperatureLevel: '易燃红',
+      defensePercent: 60,
+      surfaceMeaning: 'Surface meaning',
+      realSubtext: 'Real subtext',
+      corePainPoint: 'Need validation',
+      strategies: const [],
+      initialNpcThought: 'Inner thought',
+      initialNpcSpeech: 'Speech',
+      isMock: true,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DecoderResultScreen(result: mockResult),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // For isMock: true, badge shows Simulation Engine
+    expect(find.text('Simulation Engine'), findsOneWidget);
+    expect(find.text('Live Cognitive AI'), findsNothing);
+
+    // For isMock: false, badge shows Live Cognitive AI
+    final liveResult = DecodeResult(
+      id: 'live-test-1',
+      createdAt: DateTime.now(),
+      inputText: 'Test input 2',
+      relationship: 'Workplace',
+      temperature: 40,
+      temperatureLevel: '焦躁黄',
+      defensePercent: 30,
+      surfaceMeaning: 'Surface 2',
+      realSubtext: 'Real 2',
+      corePainPoint: 'Clarity',
+      strategies: const [],
+      initialNpcThought: 'Inner thought 2',
+      initialNpcSpeech: 'Speech 2',
+      isMock: false,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: DecoderResultScreen(result: liveResult),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Live Cognitive AI'), findsOneWidget);
+  });
 }
+

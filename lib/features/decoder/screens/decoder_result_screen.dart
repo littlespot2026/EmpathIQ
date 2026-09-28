@@ -4,6 +4,7 @@ import '../../../core/models/decode_result.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/iceberg_gauge.dart';
 import '../widgets/strategy_card.dart';
+import '../../legal/widgets/legal_policy_dialog.dart';
 import '../../poster/screens/poster_generator_screen.dart';
 import '../../sandbox/screens/conflict_sandbox_screen.dart';
 
@@ -104,12 +105,47 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
                           ),
                         ),
                       ),
-                      const Text(
-                        'EmpathIQ Cognitive AI',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textMuted,
-                          letterSpacing: 0.4,
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: widget.result.isMock
+                              ? AppColors.amberSand.withValues(alpha: 0.12)
+                              : AppColors.coldBlue.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: widget.result.isMock
+                                ? AppColors.amberSand.withValues(alpha: 0.4)
+                                : AppColors.coldBlue.withValues(alpha: 0.4),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              widget.result.isMock
+                                  ? Icons.science_outlined
+                                  : Icons.auto_awesome,
+                              size: 11,
+                              color: widget.result.isMock
+                                  ? AppColors.amberSand
+                                  : AppColors.coldBlue,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.result.isMock
+                                  ? (AppLocale.instance.currentCode == 'zh' ? '沙盒仿真引擎' : 'Simulation Engine')
+                                  : (AppLocale.instance.currentCode == 'zh' ? 'Gemini 实时透视' : 'Live Cognitive AI'),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: widget.result.isMock
+                                    ? AppColors.amberSand
+                                    : AppColors.coldBlue,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -161,6 +197,40 @@ class _DecoderResultScreenState extends State<DecoderResultScreen>
                         child: Text('No strategies found', style: TextStyle(color: AppColors.textMuted)),
                       ),
                     ),
+
+                  const SizedBox(height: 12),
+
+                  // Psychological & Legal Non-Clinical Disclaimer Banner
+                  InkWell(
+                    onTap: () => LegalPolicyDialog.show(context, initialTab: 'disclaimer'),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceElevated.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.borderSubtle.withValues(alpha: 0.6)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline_rounded, size: 14, color: AppColors.warmBeige),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              tr('legal_disclaimer_short'),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textMuted,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.textMuted),
+                        ],
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: 16),
                 ],

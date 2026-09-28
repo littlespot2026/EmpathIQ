@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_locale.dart';
 import '../../../core/services/payment_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../legal/widgets/legal_policy_dialog.dart';
 
 class ProPaywallModal extends StatefulWidget {
   final VoidCallback? onSubscribed;
@@ -343,7 +344,7 @@ class _ProPaywallModalState extends State<ProPaywallModal> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Encrypted Notice
+                  // Encrypted Notice & Auto-Renew Disclosure
                   Text(
                     tr('cancel_anytime'),
                     textAlign: TextAlign.center,
@@ -352,7 +353,66 @@ class _ProPaywallModalState extends State<ProPaywallModal> {
                       color: AppColors.textMuted,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      tr('sub_terms_footnote'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textMuted.withValues(alpha: 0.7),
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Legal Compliance Links (App Store / Google Play EULA & Privacy)
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      InkWell(
+                        onTap: () => LegalPolicyDialog.show(context, initialTab: 'terms'),
+                        child: Text(
+                          tr('terms_of_use_title'),
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.textMuted,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const Text('•', style: TextStyle(fontSize: 10, color: AppColors.borderLight)),
+                      InkWell(
+                        onTap: () => LegalPolicyDialog.show(context, initialTab: 'privacy'),
+                        child: Text(
+                          tr('privacy_policy_title'),
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.textMuted,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const Text('•', style: TextStyle(fontSize: 10, color: AppColors.borderLight)),
+                      InkWell(
+                        onTap: () => LegalPolicyDialog.show(context, initialTab: 'disclaimer'),
+                        child: Text(
+                          tr('disclaimer_title'),
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.textMuted,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
 
                   // Bottom Utilities: Restore purchases & Sandbox Toggle
                   Wrap(
